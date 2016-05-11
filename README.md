@@ -4,7 +4,6 @@
 kd tree  
 link cut tree  
 FFT   
-最短路  
 Flow  
 General matching  
 Big number  
