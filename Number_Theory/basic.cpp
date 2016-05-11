@@ -2,14 +2,13 @@ typedef long long int LL;
 
 LL gcd(const LL &a, const LL &b) { return b==0 ? a : gcd(b,a%b); }
 void gcd(const LL &a, const LL &b, LL &d, LL &x, LL &y) {
-    if(!b) { d=a; x=1; y=0; }
-    else { gcd(b,a%b,d,y,x); y-=x*(a/b); }
+    if(!b) d=a,x=1,y=0;
+    else gcd(b,a%b,d,y,x), y-=x*(a/b);
 }
 
 const int MAXPRIME = 1000000;
 int iscom[MAXPRIME], prime[MAXPRIME], primecnt;
-void sieve(void)
-{
+void sieve() {
     memset(iscom,0,sizeof(iscom));
     primecnt = 0;
     for(int i=2;i<MAXPRIME;++i) {
@@ -23,7 +22,7 @@ void sieve(void)
 }
 
 bool g_test(const LL &g, const LL &p, const vector<LL> &v) {
-    for(int i=0;i<(int)v.size();++i)
+    for(int i=0;i<v.size();++i)
         if(modexp(g,(p-1)/v[i],p)==1)
             return false;
     return true;
@@ -32,7 +31,7 @@ LL primitive_root(const LL &p) {
     if(p==2) return 1;
     vector<LL> v;
     Factor(p-1,v);
-    v.erase( unique( v.begin(), v.end() ), v.end());
+    v.erase(unique(v.begin(), v.end()), v.end());
     for(LL g=2;g<p;++g)
         if(g_test(g,p,v))
             return g;
@@ -49,11 +48,11 @@ LL inv(const LL &a, const LL &n) {
 }
 
 LL china(const int &n, const int a[], const int m[]) {
-    // x = a[i] ( mod m[i] )
+    // x = a[i] (mod m[i])
     LL M=1, d, y, x=0;
     for(int i=0;i<n;++i) M *= m[i];
     for(int i=0;i<n;++i) {
-        LL w = M / m[i];
+        LL w = M/m[i];
         gcd(m[i], w, d, d, y);
         x = (x + y*w*a[i]) % M;
     }
@@ -62,12 +61,10 @@ LL china(const int &n, const int a[], const int m[]) {
 
 LL log_mod(const LL &a, const LL &b, const LL &p) {
     // a ^ x = b ( mod p )
-    int m, e=1;
-    LL v;
-    m = (int)sqrt(p+0.5);
-    v = inv(modexp(a,m,p), p);
+    int m=sqrt(p+.5), e=1;
+    LL v=inv(modexp(a,m,p), p);
     map<LL,int> x;
-    x[1] = 0;
+    x[1]=0;
     for(int i=1;i<m;++i) {
         e = LLmul(e,a,p);
         if(!x.count(e)) x[e] = i;
