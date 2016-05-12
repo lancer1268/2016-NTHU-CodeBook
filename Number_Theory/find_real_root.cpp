@@ -45,4 +45,5 @@ vector<double> cal(vector<double>coef, int n){
 int main () {
     vector<double>ve;
     vector<double>ans = cal(ve, n);
+    // 視情況把答案 +eps，避免 -0
 }
