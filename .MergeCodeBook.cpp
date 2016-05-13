@@ -26,19 +26,20 @@ std::wstring UTF8ToUTF16W(const std::string &input)
 {
     return CPToUTF16(CP_UTF8, input);
 }
-
-std::string UTF16ToUTF8(const std::wstring& input)
+//CP_ACP
+std::string UTF16ToUTF8(const std::wstring& input,unsigned codepage = CP_UTF8)
 {
-    auto const size = WideCharToMultiByte(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), nullptr, 0, nullptr, nullptr);
+    auto const size = WideCharToMultiByte(codepage, 0, input.data(), static_cast<int>(input.size()), nullptr, 0, nullptr, nullptr);
 
     std::string output;
     output.resize(size);
 
-    if (size == 0 || size != WideCharToMultiByte(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), &output[0], static_cast<int>(output.size()), nullptr, nullptr))
+    if (size == 0 || size != WideCharToMultiByte(codepage, 0, input.data(), static_cast<int>(input.size()), &output[0], static_cast<int>(output.size()), nullptr, nullptr))
         output.clear();
 
     return output;
 }
+
 
 void merge(string root,int d=0)
 {
@@ -57,7 +58,7 @@ void merge(string root,int d=0)
         else if( regex_match(FileName,CPPFILE) )
         {
             cout<<setw(d*4)<<""<<FileName<<endl;
-            fin.open(root+FileName);
+            fin.open(root+UTF16ToUTF8(fd.cFileName,CP_ACP));
             string buf((std::istreambuf_iterator<char>(fin)),
                         std::istreambuf_iterator<char>());
             fin.close();
