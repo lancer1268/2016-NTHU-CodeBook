@@ -74,9 +74,9 @@ void prefactor(LL &n, vector<LL> &v) {
 
 void smallfactor(LL n, vector<LL> &v) {
     if(n<MAXPRIME) {
-        while(iscom[(int)n]) {
-            v.push_back(iscom[(int)n]);
-            n/=iscom[(int)n];
+        while(isp[(int)n]) {
+            v.push_back(isp[(int)n]);
+            n/=isp[(int)n];
         }
         v.push_back(n);
     } else {
