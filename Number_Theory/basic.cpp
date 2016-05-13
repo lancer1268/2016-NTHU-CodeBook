@@ -1,21 +1,20 @@
 typedef long long int LL;
-
-LL gcd(const LL &a, const LL &b) { return b==0 ? a : gcd(b,a%b); }
-void gcd(const LL &a, const LL &b, LL &d, LL &x, LL &y) {
+template<typename T>
+void gcd(const T &a,const T &b,T &d,T &x,T &y){
     if(!b) d=a,x=1,y=0;
     else gcd(b,a%b,d,y,x), y-=x*(a/b);
 }
 
 const int MAXPRIME = 1000000;
-int iscom[MAXPRIME], prime[MAXPRIME], primecnt;
+int isp[MAXPRIME], prime[MAXPRIME], primecnt;
 void sieve() {
-    memset(iscom,0,sizeof(iscom));
+    memset(isp,0,sizeof(isp));
     primecnt = 0;
     for(int i=2;i<MAXPRIME;++i) {
-        if(!iscom[i]) prime[primecnt++] = i;
+        if(!isp[i]) prime[primecnt++] = i;
         for(int j=0;j<primecnt;++j) {
             if(i*prime[j]>=MAXPRIME) break;
-            iscom[i*prime[j]] = prime[j];
+            isp[i*prime[j]] = prime[j];
             if(i%prime[j]==0) break;
         }
     }
