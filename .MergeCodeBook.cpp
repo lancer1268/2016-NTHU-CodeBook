@@ -9,27 +9,59 @@ ofstream fout;
 ifstream fin;
 std::regex CPPFILE(R"(.*\.cpp)");
 
+static std::wstring CPToUTF16(unsigned code_page, const std::string& input)
+{
+    auto const size = MultiByteToWideChar(code_page, 0, input.data(), static_cast<int>(input.size()), nullptr, 0);
+
+    std::wstring output;
+    output.resize(size);
+
+    if (size == 0 || size != MultiByteToWideChar(code_page, 0, input.data(), static_cast<int>(input.size()), &output[0], static_cast<int>(output.size())))
+        output.clear();
+
+    return output;
+}
+
+std::wstring UTF8ToUTF16W(const std::string &input)
+{
+    return CPToUTF16(CP_UTF8, input);
+}
+
+std::string UTF16ToUTF8(const std::wstring& input)
+{
+    auto const size = WideCharToMultiByte(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), nullptr, 0, nullptr, nullptr);
+
+    std::string output;
+    output.resize(size);
+
+    if (size == 0 || size != WideCharToMultiByte(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), &output[0], static_cast<int>(output.size()), nullptr, nullptr))
+        output.clear();
+
+    return output;
+}
+
 void merge(string root,int d=0)
 {
-    WIN32_FIND_DATAA fd;
-    HANDLE hD = FindFirstFile((root+"*").c_str(),&fd);
-    
+    WIN32_FIND_DATAW fd;
+    HANDLE hD = FindFirstFileW(UTF8ToUTF16W(root+"*").c_str(),&fd);
+    string FileName;
     do{
-        if( fd.cFileName[0] == '.' )continue;
+        FileName = UTF16ToUTF8(fd.cFileName);
+        if( FileName[0] == '.' )continue;
         if( fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
         {
-            cout<<setw(d*4)<<""<<fd.cFileName<<endl;
-            merge(root+fd.cFileName+"\\",d+1);
+            cout<<setw(d*4)<<""<<FileName<<endl;
+            merge(root+FileName+"\\",d+1);
             continue;
         }
-        else if( regex_match(fd.cFileName,CPPFILE) )
+        else if( regex_match(FileName,CPPFILE) )
         {
-            cout<<setw(d*4)<<""<<fd.cFileName<<endl;
-            fin.open(root+fd.cFileName);
+            cout<<setw(d*4)<<""<<FileName<<endl;
+            fin.open(root+FileName);
             string buf((std::istreambuf_iterator<char>(fin)),
                         std::istreambuf_iterator<char>());
             fin.close();
-            fout<<"Code:"<<root<<fd.cFileName<<endl
+            fout<<"Code:"<<root<<FileName<<endl
                 <<"================"<<endl
                 <<endl
                 <<"```cpp"<<endl
@@ -37,7 +69,7 @@ void merge(string root,int d=0)
                 <<"```"<<endl
                 <<endl;
         }
-    }while(FindNextFileA(hD,&fd));
+    }while(FindNextFileW(hD,&fd));
 }
 int main()
 {

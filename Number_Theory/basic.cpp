@@ -1,7 +1,6 @@
 typedef long long int LL;
-
-LL gcd(const LL &a, const LL &b) { return b==0 ? a : gcd(b,a%b); }
-void gcd(const LL &a, const LL &b, LL &d, LL &x, LL &y) {
+template<typename T>
+void gcd(const T &a,const T &b,T &d,T &x,T &y){
     if(!b) d=a,x=1,y=0;
     else gcd(b,a%b,d,y,x), y-=x*(a/b);
 }
