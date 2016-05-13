@@ -7,7 +7,7 @@
 using namespace std;
 ofstream fout;
 ifstream fin;
-std::regex CPPFILE(R"(.*\.cpp)");
+std::regex CPPFILE(R"A(.*(\.cpp|formula)$)A");
 
 static std::wstring CPToUTF16(unsigned code_page, const std::string& input)
 {

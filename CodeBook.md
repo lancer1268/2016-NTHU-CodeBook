@@ -632,6 +632,71 @@ class kd_tree{
 
 ```
 
+Code:.\Data Structure\skew_heap.cpp
+================
+
+```cpp
+#ifndef SKEW_HEAP
+#define SKEW_HEAP
+template<typename T,typename _Compare=std::less<T> >
+class skew_heap{
+	private:
+		struct node{
+			T data;
+			node *l,*r;
+			node(const T&d):data(d),l(0),r(0){}
+		}*root;
+		int _size;
+		_Compare cmp;
+		node *merge(node *a,node *b){
+			if(!a||!b)return a?a:b;
+			if(cmp(a->data,b->data))return merge(b,a);
+			node *t=a->r;
+			a->r=a->l;
+			a->l=merge(b,t);
+			return a;
+		}
+		void _clear(node *&o){
+			if(o)_clear(o->l),_clear(o->r),delete o;
+		}
+	public:
+		skew_heap():root(0),_size(0){}
+		~skew_heap(){_clear(root);}
+		inline void clear(){
+			_clear(root);root=0;_size=0;
+		}
+		inline void join(skew_heap &o){
+			root=merge(root,o.root);
+			o.root=0;
+			_size+=o._size;
+			o._size=0;
+		}
+		inline void swap(skew_heap &o){
+			node *t=root;
+			root=o.root;
+			o.root=t;
+			int st=_size;
+			_size=o._size;
+			o._size=st;
+		}
+		inline void push(const T&data){
+			_size++;
+			root=merge(root,new node(data));
+		}
+		inline void pop(){
+			if(_size)_size--;
+			node *tmd=merge(root->l,root->r);
+			delete root;
+			root=tmd;
+		}
+		inline const T& top(){return root->data;}
+		inline int size(){return _size;}
+		inline bool empty(){return !_size;}
+};
+#endif
+
+```
+
 Code:.\Data Structure\split_merge.cpp
 ================
 
@@ -841,6 +906,74 @@ int dinic(int s,int t){
 	}
 	return ret;
 }
+
+```
+
+Code:.\Flow\KM.cpp
+================
+
+```cpp
+struct KM{
+// Maximum Bipartite Weighted Matching (Perfect Match)
+	static const int MXN = 650;
+	static const int INF = 2147483647; // long long
+	int n,match[MXN],vx[MXN],vy[MXN];
+	int edge[MXN][MXN],lx[MXN],ly[MXN],slack[MXN];
+	// ^^^^ long long
+	void init(int _n){
+		n = _n;
+		for (int i=0; i<n; i++)
+			for (int j=0; j<n; j++)
+				edge[i][j] = 0;
+	}
+	void add_edge(int x, int y, int w){ // long long
+		edge[x][y] = w;
+	}
+	bool DFS(int x){
+		vx[x] = 1;
+		for (int y=0; y<n; y++){
+			if (vy[y]) continue;
+			if (lx[x]+ly[y] > edge[x][y]){
+				slack[y] = min(slack[y], lx[x]+ly[y]-edge[x][y]);
+			} else {
+				vy[y] = 1;
+				if (match[y] == -1 || DFS(match[y])){
+					match[y] = x;
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	int solve(){
+		fill(match,match+n,-1);
+		fill(lx,lx+n,-INF);
+		fill(ly,ly+n,0);
+		for (int i=0; i<n; i++)
+			for (int j=0; j<n; j++)
+				lx[i] = max(lx[i], edge[i][j]);
+		for (int i=0; i<n; i++){
+			fill(slack,slack+n,INF);
+			while (true){
+				fill(vx,vx+n,0);
+				fill(vy,vy+n,0);
+				if ( DFS(i) ) break;
+				int d = INF; // long long
+				for (int j=0; j<n; j++)
+					if (!vy[j]) d = min(d, slack[j]);
+				for (int j=0; j<n; j++){
+					if (vx[j]) lx[j] -= d;
+					if (vy[j]) ly[j] += d;
+					else slack[j] -= d;
+				}
+			}
+		}
+		int res=0;
+		for (int i=0; i<n; i++)
+			res += edge[match[i]][i];
+		return res;
+	}
+}graph;
 
 ```
 
@@ -1636,6 +1769,52 @@ int main () {
     vector<double>ve;
     vector<double>ans = cal(ve, n);
     // 視情況把答案 +eps，避免 -0
+}
+
+```
+
+Code:.\Number Theory\formula
+================
+
+```cpp
+Sigma_{d|n} phi(n) = n
+Sigma_{d|n} mu(n) = (n==1)
+g(n) = Sigma_{d|n} f(d) => f(n) = Sigma_{d|n} mu(d)*g(n/d)
+Catalan number: (2n)!/n!/n!/(n+1)
+Harmonic series H_n = ln(n) + gamma + 1/(2n) - 1/(12nn) + 1/(120nnnn)
+gamma = 0.57721566490153286060651209008240243104215933593992
+i-th gray code:i^(i>>1)
+
+```
+
+Code:.\Number Theory\Gauss_Elimination.cpp
+================
+
+```cpp
+const int MAX = 300;
+const double EPS = 1e-8;
+
+double mat[MAX][MAX];
+void Gauss(int n) {
+	for(int i=0; i<n; i++) {
+		bool ok = 0;
+		for(int j=i; j<n; j++) {
+			if(fabs(mat[j][i]) > EPS) {
+				swap(mat[j], mat[i]);
+				ok = 1;
+				break;
+			}
+		}
+		if(!ok) continue;
+
+		double fs = mat[i][i];
+		for(int j=i+1; j<n; j++) {
+			double r = mat[j][i] / fs;
+			for(int k=i; k<n; k++) {
+				mat[j][k] -= mat[i][k] * r;
+			}
+		}
+	}
 }
 
 ```
