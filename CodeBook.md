@@ -546,6 +546,307 @@ bool MST(int cost,int n,int root)
 
 ```
 
+Code:.\Graph\§@ØÎπœ≥Ã§j≈v§«∞t.cpp
+================
+
+```cpp
+#include<cstdio>
+#include<algorithm>
+#include<vector>
+using namespace std;
+
+const int INF = 2147483647;
+const int MaxN = 400;
+const int MaxM = 79800;
+const int MaxNX = MaxN + MaxN;
+
+struct edge{
+	int v,u,w;
+	edge(){}
+	edge(const int _v, const int _u, const int _w):v(_v),u(_u),w(_w){}
+};
+
+int n,m;
+edge mat[MaxNX + 1][MaxNX + 1];
+
+int n_matches;
+long long tot_weight;
+int mate[MaxNX + 1];
+int lab[MaxNX + 1];
+
+int q_n, q[MaxN];
+int fa[MaxNX + 1], col[MaxNX + 1];
+int slackv[MaxNX + 1];
+
+int n_x;
+int bel[MaxNX + 1], blofrom[MaxNX + 1][MaxN + 1];
+vector<int> bloch[MaxNX + 1];
+
+inline int e_delta(const edge &e){ // does not work inside blossoms
+	return lab[e.v] + lab[e.u] - mat[e.v][e.u].w * 2;
+}
+inline void update_slackv(int v, int x){
+	if (!slackv[x] || e_delta(mat[v][x]) < e_delta(mat[slackv[x]][x]))
+		slackv[x] = v;
+}
+inline void calc_slackv(int x){
+	slackv[x] = 0;
+	for (int v = 1; v <= n; v++)
+		if (mat[v][x].w > 0 && bel[v] != x && col[bel[v]] == 0)
+			update_slackv(v, x);
+}
+
+inline void q_push(int x){
+	if (x <= n)q[q_n++] = x;
+	else{
+		for (size_t i = 0; i < bloch[x].size(); i++)
+			q_push(bloch[x][i]);
+	}
+}
+inline void set_mate(int xv, int xu){
+	mate[xv] = mat[xv][xu].u;
+	if (xv > n){
+		edge e = mat[xv][xu];
+		int xr = blofrom[xv][e.v];
+		int pr = find(bloch[xv].begin(), bloch[xv].end(), xr) - bloch[xv].begin();
+		if (pr % 2 == 1){
+			reverse(bloch[xv].begin() + 1, bloch[xv].end());
+			pr = (int)bloch[xv].size() - pr;
+		}
+
+		for (int i = 0; i < pr; i++)
+			set_mate(bloch[xv][i], bloch[xv][i^1]);
+		set_mate(xr, xu);
+
+		rotate(bloch[xv].begin(), bloch[xv].begin() + pr, bloch[xv].end());
+	}
+}
+inline void set_bel(int x, int b){
+	bel[x] = b;
+	if (x > n){
+		for (size_t i = 0; i < bloch[x].size(); i++)
+			set_bel(bloch[x][i], b);
+	}
+}
+inline void augment(int xv, int xu){
+	for(;;){
+		int xnu = bel[mate[xv]];
+		set_mate(xv, xu);
+		if (!xnu)return;
+		set_mate(xnu, bel[fa[xnu]]);
+		xv = bel[fa[xnu]], xu = xnu;
+	}
+}
+inline int get_lca(int xv, int xu){
+	static bool book[MaxNX + 1];
+	for (int x = 1; x <= n_x; x++)book[x]=false;
+	while(xv||xu){
+		if(xv){
+			if(book[xv])return xv;
+			book[xv] = true;
+			xv = bel[mate[xv]];
+			if(xv)xv = bel[fa[xv]];
+		}
+		swap(xv, xu);
+	}
+	return 0;
+}
+inline void add_blossom(int xv, int xa, int xu){
+	int b=n+1;
+	while(b <= n_x && bel[b])b++;
+	if(b > n_x)n_x++;
+
+	lab[b] = 0;
+	col[b] = 0;
+
+	mate[b] = mate[xa];
+
+	bloch[b].clear();
+	bloch[b].push_back(xa);
+	for (int x = xv; x != xa; x = bel[fa[bel[mate[x]]]])
+		bloch[b].push_back(x), bloch[b].push_back(bel[mate[x]]), q_push(bel[mate[x]]);
+	reverse(bloch[b].begin() + 1, bloch[b].end());
+	for (int x = xu; x != xa; x = bel[fa[bel[mate[x]]]])
+		bloch[b].push_back(x), bloch[b].push_back(bel[mate[x]]), q_push(bel[mate[x]]);
+
+	set_bel(b, b);
+
+	for (int x = 1; x <= n_x; x++){
+		mat[b][x].w = mat[x][b].w = 0;
+		blofrom[b][x] = 0;
+	}
+	for (size_t i = 0; i < bloch[b].size(); i++){
+		int xs = bloch[b][i];
+		for (int x = 1; x <= n_x; x++)
+			if (mat[b][x].w == 0 || e_delta(mat[xs][x]) < e_delta(mat[b][x]))
+				mat[b][x] = mat[xs][x], mat[x][b] = mat[x][xs];
+		for (int x = 1; x <= n_x; x++)
+			if (blofrom[xs][x])
+				blofrom[b][x] = xs;
+	}
+	calc_slackv(b);
+}
+inline void expand_blossom1(int b){ // lab[b] == 1
+	for (size_t i = 0; i < bloch[b].size(); i++)
+		set_bel(bloch[b][i], bloch[b][i]);
+
+	int xr = blofrom[b][mat[b][fa[b]].v];
+	int pr = find(bloch[b].begin(), bloch[b].end(), xr) - bloch[b].begin();
+	if (pr % 2 == 1){
+		reverse(bloch[b].begin() + 1, bloch[b].end());
+		pr = (int)bloch[b].size() - pr;
+	}
+
+	for (int i = 0; i < pr; i += 2){
+		int xs = bloch[b][i], xns = bloch[b][i + 1];
+		fa[xs] = mat[xns][xs].v;
+		col[xs] = 1, col[xns] = 0;
+		slackv[xs] = 0, calc_slackv(xns);
+		q_push(xns);
+	}
+	col[xr] = 1;
+	fa[xr] = fa[b];
+	for (size_t i = pr + 1; i < bloch[b].size(); i++){
+		int xs = bloch[b][i];
+		col[xs] = -1;
+		calc_slackv(xs);
+	}
+
+	bel[b] = 0;
+}
+inline void expand_blossom_final(int b){ // at the final stage
+	for (size_t i = 0; i < bloch[b].size(); i++){
+		if (bloch[b][i] > n && lab[bloch[b][i]] == 0)
+			expand_blossom_final(bloch[b][i]);
+		else
+			set_bel(bloch[b][i], bloch[b][i]);
+	}
+	bel[b] = 0;
+}
+inline bool on_found_edge(const edge &e){
+	int xv = bel[e.v], xu = bel[e.u];
+	if (col[xu] == -1){
+		int nv = bel[mate[xu]];
+		fa[xu] = e.v;
+		col[xu] = 1, col[nv] = 0;
+		slackv[xu] = slackv[nv] = 0;
+		q_push(nv);
+	}else if (col[xu] == 0){
+		int xa = get_lca(xv, xu);
+		if (!xa){
+			augment(xv, xu), augment(xu, xv);
+			for (int b = n + 1; b <= n_x; b++)
+				if (bel[b] == b && lab[b] == 0)
+					expand_blossom_final(b);
+			return true;
+		}else add_blossom(xv, xa, xu);
+	}
+	return false;
+}
+bool match(){
+	for (int x = 1; x <= n_x; x++)col[x]=-1,slackv[x]=0;
+	q_n = 0;
+	
+	for(int x = 1; x <= n_x; x++)
+		if (bel[x] == x && !mate[x])
+			fa[x] = 0, col[x] = 0, slackv[x] = 0, q_push(x);
+	if(q_n == 0)return false;
+
+	for(;;){
+		for (int i = 0; i < q_n; i++){
+			int v = q[i];
+			for (int u = 1; u <= n; u++)
+				if (mat[v][u].w > 0 && bel[v] != bel[u]){
+					int d = e_delta(mat[v][u]);
+					if (d == 0){
+						if (on_found_edge(mat[v][u]))return true;
+					}else if (col[bel[u]] == -1 || col[bel[u]] == 0)
+						update_slackv(v, bel[u]);
+				}
+		}
+
+		int d = INF;
+		for (int v = 1; v <= n; v++)
+			if (col[bel[v]] == 0)
+				d=min(d, lab[v]);
+		for (int b = n + 1; b <= n_x; b++)
+			if (bel[b] == b && col[b] == 1)
+				d=min(d, lab[b] / 2);
+		for (int x = 1; x <= n_x; x++)
+			if (bel[x] == x && slackv[x]){
+				if (col[x] == -1)
+					d=min(d, e_delta(mat[slackv[x]][x]));
+				else if (col[x] == 0)
+					d=min(d, e_delta(mat[slackv[x]][x]) / 2);
+			}
+
+		for (int v = 1; v <= n; v++){
+			if (col[bel[v]] == 0)lab[v] -= d;
+			else if (col[bel[v]] == 1)lab[v] += d;
+		}
+		for (int b = n + 1; b <= n_x; b++)
+			if (bel[b] == b){
+				if (col[bel[b]] == 0)lab[b] += d * 2;
+				else if (col[bel[b]] == 1)lab[b] -= d * 2;
+			}
+
+		q_n = 0;
+		for (int v = 1; v <= n; v++)
+			if(lab[v]==0)return false; // all unmatched vertices' labels are zero! cheers!
+		for (int x = 1; x <= n_x; x++)
+			if(bel[x]==x&&slackv[x]&&bel[slackv[x]]!=x&&e_delta(mat[slackv[x]][x])==0){
+				if (on_found_edge(mat[slackv[x]][x]))return true;
+			}
+		for (int b = n + 1; b <= n_x; b++)
+			if (bel[b] == b && col[b] == 1 && lab[b] == 0)
+				expand_blossom1(b);
+	}
+	return false;
+}
+void calc_max_weight_match(){
+	for (int v = 1; v <= n; v++)mate[v] = 0;
+
+	n_x = n;
+	n_matches = 0;
+	tot_weight = 0;
+
+	bel[0]=0;
+	for(int v = 1; v <= n; v++)
+		bel[v] = v, bloch[v].clear();
+	for (int v = 1; v <= n; v++)
+		for (int u = 1; u <= n; u++)
+			blofrom[v][u] = v == u ? v : 0;
+
+	int w_max = 0;
+	for (int v = 1; v <= n; v++)
+		for (int u = 1; u <= n; u++)
+			w_max=max(w_max, mat[v][u].w);
+	for (int v = 1; v <= n; v++)lab[v] = w_max;
+
+	while (match())n_matches++;
+
+	for (int v = 1; v <= n; v++)
+		if (mate[v] && mate[v] < v)
+			tot_weight += mat[v][mate[v]].w;
+}
+int main(){
+	scanf("%d%d",&n,&m);
+	for (int v = 1; v <= n; v++)
+		for (int u = 1; u <= n; u++)
+			mat[v][u] = edge(v, u, 0);
+	for (int i = 0; i < m; i++){
+		int v,u,w;
+		scanf("%d%d%d",&v,&u,&w);
+		mat[v][u].w = mat[u][v].w = w;
+	}
+	calc_max_weight_match();
+	printf("%lld\n", tot_weight);
+	for (int v = 1; v <= n; v++)printf("%d ", mate[v]);puts("");
+	return 0;
+}
+
+```
+
 Code:.\Number_Theory\basic.cpp
 ================
 
@@ -841,6 +1142,49 @@ void AllFactor(const LL &n,vector<LL> &v) {
 
 ```
 
+Code:.\Number_Theory\FFT.cpp
+================
+
+```cpp
+#ifndef SUNMOON_FFT
+#define SUNMOON_FFT
+#include<vector>
+#include<complex>
+#include<algorithm>
+template<typename T,typename VT=std::vector<std::complex<T> > >
+struct FFT{
+	const T pi;
+	FFT(const T pi=acos((T)-1)):pi(pi){}
+	inline unsigned int bit_reverse(unsigned int a,int len){
+		a=((a&0x55555555U)<<1)|((a&0xAAAAAAAAU)>>1);
+		a=((a&0x33333333U)<<2)|((a&0xCCCCCCCCU)>>2);
+		a=((a&0x0F0F0F0FU)<<4)|((a&0xF0F0F0F0U)>>4);
+		a=((a&0x00FF00FFU)<<8)|((a&0xFF00FF00U)>>8);
+		a=((a&0x0000FFFFU)<<16)|((a&0xFFFF0000U)>>16);
+		return a>>(32-len);
+	}
+	inline void fft(bool is_inv,VT &in,VT &out,int N){
+		int bitlen=std::__lg(N),num=is_inv?-1:1;
+		for(int i=0;i<N;++i)out[bit_reverse(i,bitlen)]=in[i];
+		for(int step=2;step<=N;step<<=1){
+			const int mh=step>>1;
+			for(int i=0;i<mh;++i){
+				std::complex<T> wi=exp(std::complex<T>(0,i*num*pi/mh));
+				for(int j=i;j<N;j+=step){
+					int k=j+mh;
+					std::complex<T> u=out[j],t=wi*out[k];
+					out[j]=u+t;
+					out[k]=u-t;
+				}
+			}
+		}
+		if(is_inv)for(int i=0;i<N;++i)out[i]/=N;
+	}
+};
+#endif
+
+```
+
 Code:.\Number_Theory\find_real_root.cpp
 ================
 
@@ -894,6 +1238,62 @@ int main () {
     vector<double>ans = cal(ve, n);
     // Ë¶ñÊÉÖÊ≥ÅÊääÁ≠îÊ°à +epsÔºåÈÅøÂÖç -0
 }
+
+```
+
+Code:.\Number_Theory\NTT.cpp
+================
+
+```cpp
+#ifndef SUNMOON_NTT
+#define SUNMOON_NTT
+#include<vector>
+#include<algorithm>
+template<typename T,typename VT=std::vector<T> >
+struct NTT{
+	const T P,G;
+	NTT(T p=(1<<23)*7*17+1,T g=3):P(p),G(g){}
+	inline unsigned int bit_reverse(unsigned int a,int len){
+		a=((a&0x55555555U)<<1)|((a&0xAAAAAAAAU)>>1);
+		a=((a&0x33333333U)<<2)|((a&0xCCCCCCCCU)>>2);
+		a=((a&0x0F0F0F0FU)<<4)|((a&0xF0F0F0F0U)>>4);
+		a=((a&0x00FF00FFU)<<8)|((a&0xFF00FF00U)>>8);
+		a=((a&0x0000FFFFU)<<16)|((a&0xFFFF0000U)>>16);
+		return a>>(32-len);
+	}
+	inline T pow_mod(T n,T k,T m){
+		T ans=1;
+		for(n=(n>=m?n%m:n);k;k>>=1){
+			if(k&1)ans=ans*n%m;
+			n=n*n%m;
+		}
+		return ans;
+	}
+	inline void ntt(bool is_inv,VT &in,VT &out,int N){
+		int bitlen=std::__lg(N);
+		for(int i=0;i<N;++i)out[bit_reverse(i,bitlen)]=in[i];
+		for(int step=2,id=1;step<=N;step<<=1,++id){
+			T wn=pow_mod(G,(P-1)>>id,P),wi=1,u,t;
+			const int mh=step>>1;
+			for(int i=0;i<mh;++i){
+				for(int j=i;j<N;j+=step){
+					u=out[j],t=wi*out[j+mh]%P;
+					out[j]=u+t;
+					out[j+mh]=u-t;
+					if(out[j]>=P)out[j]-=P;
+					if(out[j+mh]<0)out[j+mh]+=P;
+				}
+				wi=wi*wn%P;
+			}
+		}
+		if(is_inv){
+			for(int i=1;i<N/2;++i)std::swap(out[i],out[N-i]);
+			T invn=pow_mod(N,P-2,P);
+			for(int i=0;i<N;++i)out[i]=out[i]*invn%P;
+		}
+	}
+};
+#endif
 
 ```
 
@@ -1065,7 +1465,7 @@ inline void change(int x,int b){
 
 ```
 
-Code:.\æ√Ï≠Â§¿.cpp
+Code:.\Tree_problem\æΩm≠Â§¿.cpp
 ================
 
 ```cpp
