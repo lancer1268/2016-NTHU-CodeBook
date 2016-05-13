@@ -98,6 +98,3 @@ LL Tonelli_Shanks(const LL &n, const LL &p) {
     }
     return -1;
 }
-
-// Harmonic series H_n = ln(n) + gamma + 1/(2n) - 1/(12nn) + 1/(120nnnn)
-// gamma = 0.57721566490153286060651209008240243104215933593992
