@@ -1,3 +1,4 @@
 Sigma_{d|n} phi(n) = n
 Sigma_{d|n} mu(n) = (n==1)
 g(n) = Sigma_{d|n} f(d) => f(n) = Sigma_{d|n} mu(d)*g(n/d)
+第i個gray code:i^(i>>1)
