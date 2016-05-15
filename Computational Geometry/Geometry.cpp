@@ -64,9 +64,9 @@ struct line{
 		return (p2-p1).cross(l.p1)*(p2-p1).cross(l.p2)<=0;
 	}
 	/*直線相交情況，-1無限多點、1交於一點、0不相交*/
-	char line_intersect(const line &l)const{return parallel(l)?(cross(l.p1)==0?-1:0):1;}
+	int line_intersect(const line &l)const{return parallel(l)?(cross(l.p1)==0?-1:0):1;}
 	/*線段相交情況，-1無限多點、1交於一點、0不相交*/
-	char seg_intersect(const line &l)const{
+	int seg_intersect(const line &l)const{
 		T c1=(p2-p1).cross(l.p1-p1);
 		T c2=(p2-p1).cross(l.p2-p1);
 		T c3=(l.p2-l.p1).cross(p1-l.p1);
@@ -134,7 +134,7 @@ struct polygon{
 		return point<T>(cx/3/w,cy/3/w);
 	}
 	/*點是否在凸多邊形內，是的話回傳1、在邊上回傳-1、否則回傳0*/
-	char chas(const point<T> &x)const{
+	int chas(const point<T> &x)const{
 		T tp=0,np;
 		size_t psize = p.size();
 		for(size_t i=psize-1,j=0;j<psize;i=j++){
@@ -145,7 +145,7 @@ struct polygon{
 		return 1;
 	}
 	/*點是否在簡單多邊形內，是的話回傳1、在邊上回傳-1、否則回傳0*/
-	char ahas(const point<T>& t)const{
+	int ahas(const point<T>& t)const{
 		bool c=0;
 		size_t psize = p.size();
 		for(size_t i=0,j=psize-1;i<psize;j=i++)
@@ -185,11 +185,11 @@ struct polygon{
 		if(s.size()>1)--m; 
 		p.resize(m);
 	}
-	static char sign(const T&x){return x>=0?1:-1;}
+	static int sign(const T&x){return x>=0?1:-1;}
 	static bool angle_cmp(const line<T>& A,const line<T>& B){
 		point<T>a=A.p2-A.p1,b=B.p2-B.p1;
 		//return atan2(a.y,a.x)<atan2(b.y,b.x); 
-		char ay=sign(a.y),by=sign(b.y),ax=sign(a.x),bx=sign(b.x);
+		int ay=sign(a.y),by=sign(b.y),ax=sign(a.x),bx=sign(b.x);
 		return ay>by||(ay==by&&(ax*ay>bx*by||(ax*ay==bx*by&&a.cross(b)>0)));
 	}
 	int halfplane_intersection(std::vector<line<T> > &s){
