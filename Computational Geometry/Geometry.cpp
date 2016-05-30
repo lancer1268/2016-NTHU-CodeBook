@@ -178,7 +178,7 @@ struct polygon{
 			while(m>=2&&(p[m-1]-p[m-2]).cross(s[i]-p[m-2])<=0)--m;
 			p[m++]=s[i];
 		}
-		for(int i=s.size()-2,t=m+1;i>=0;--i){
+		for(int i=(int)s.size()-2,t=m+1;i>=0;--i){
 			while(m>=t&&(p[m-1]-p[m-2]).cross(s[i]-p[m-2])<=0)--m;
 			p[m++]=s[i];
 		}
