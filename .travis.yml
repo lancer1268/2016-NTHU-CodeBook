@@ -1,0 +1,22 @@
+os:
+  - linux
+
+language: cpp
+
+sudo: false
+
+env:
+  - CPPV=CPPDEFAULT
+  - CPPV=CPP11
+  - CPPV=CPP14
+  
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-6
+      - g++-6
+
+install: ./.build_test.sh
+script: ./.run_test.sh
