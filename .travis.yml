@@ -1,11 +1,15 @@
 os:
   - linux
-  - osx
 
 language: cpp
 
 sudo: false
 
+env:
+  - CPPV=CPPDEFAULT
+  - CPPV=CPP11
+  - CPPV=CPP14
+  
 addons:
   apt:
     sources:
