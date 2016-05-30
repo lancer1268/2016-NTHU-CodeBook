@@ -1,0 +1,18 @@
+os:
+  - linux
+  - osx
+
+language: cpp
+
+sudo: false
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-6
+      - g++-6
+
+install: ./.build_test.sh
+script: ./.run_test.sh
