@@ -40,6 +40,7 @@ std::string UTF16ToUTF8(const std::wstring& input,unsigned codepage = CP_UTF8)
     return output;
 }
 
+stringstream ss;
 
 void merge(string root,int d=0)
 {
@@ -52,12 +53,14 @@ void merge(string root,int d=0)
         if( fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
         {
             cout<<setw(d*4)<<""<<FileName<<endl;
+            ss<<setw(d*2)<<""<<"- "<<FileName<<'\n';
             merge(root+FileName+"\\",d+1);
             continue;
         }
         else if( regex_match(FileName,CPPFILE) )
         {
             cout<<setw(d*4)<<""<<FileName<<endl;
+            ss<<setw(d*2)<<""<<"- "<<FileName<<'\n';
             fin.open(root+UTF16ToUTF8(fd.cFileName,CP_ACP));
             string buf((std::istreambuf_iterator<char>(fin)),
                         std::istreambuf_iterator<char>());
@@ -78,5 +81,10 @@ int main()
     fout<<"Codebook\n=======\n\n";
     
     merge(".\\");
+    
+    fout.close();
+    cout<<endl;
+    fout.open("index.md");
+    fout<< ss.str() <<endl;
     fout.close();
 }

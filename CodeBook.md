@@ -71,9 +71,9 @@ struct line{
 		return (p2-p1).cross(l.p1)*(p2-p1).cross(l.p2)<=0;
 	}
 	/*直線相交情況，-1無限多點、1交於一點、0不相交*/
-	char line_intersect(const line &l)const{return parallel(l)?(cross(l.p1)==0?-1:0):1;}
+	int line_intersect(const line &l)const{return parallel(l)?(cross(l.p1)==0?-1:0):1;}
 	/*線段相交情況，-1無限多點、1交於一點、0不相交*/
-	char seg_intersect(const line &l)const{
+	int seg_intersect(const line &l)const{
 		T c1=(p2-p1).cross(l.p1-p1);
 		T c2=(p2-p1).cross(l.p2-p1);
 		T c3=(l.p2-l.p1).cross(p1-l.p1);
@@ -141,7 +141,7 @@ struct polygon{
 		return point<T>(cx/3/w,cy/3/w);
 	}
 	/*點是否在凸多邊形內，是的話回傳1、在邊上回傳-1、否則回傳0*/
-	char chas(const point<T> &x)const{
+	int chas(const point<T> &x)const{
 		T tp=0,np;
 		size_t psize = p.size();
 		for(size_t i=psize-1,j=0;j<psize;i=j++){
@@ -152,7 +152,7 @@ struct polygon{
 		return 1;
 	}
 	/*點是否在簡單多邊形內，是的話回傳1、在邊上回傳-1、否則回傳0*/
-	char ahas(const point<T>& t)const{
+	int ahas(const point<T>& t)const{
 		bool c=0;
 		size_t psize = p.size();
 		for(size_t i=0,j=psize-1;i<psize;j=i++)
@@ -185,18 +185,18 @@ struct polygon{
 			while(m>=2&&(p[m-1]-p[m-2]).cross(s[i]-p[m-2])<=0)--m;
 			p[m++]=s[i];
 		}
-		for(int i=s.size()-2,t=m+1;i>=0;--i){
+		for(int i=(int)s.size()-2,t=m+1;i>=0;--i){
 			while(m>=t&&(p[m-1]-p[m-2]).cross(s[i]-p[m-2])<=0)--m;
 			p[m++]=s[i];
 		}
 		if(s.size()>1)--m; 
 		p.resize(m);
 	}
-	static char sign(const T&x){return x>=0?1:-1;}
+	static int sign(const T&x){return x>=0?1:-1;}
 	static bool angle_cmp(const line<T>& A,const line<T>& B){
 		point<T>a=A.p2-A.p1,b=B.p2-B.p1;
 		//return atan2(a.y,a.x)<atan2(b.y,b.x); 
-		char ay=sign(a.y),by=sign(b.y),ax=sign(a.x),bx=sign(b.x);
+		int ay=sign(a.y),by=sign(b.y),ax=sign(a.x),bx=sign(b.x);
 		return ay>by||(ay==by&&(ax*ay>bx*by||(ax*ay==bx*by&&a.cross(b)>0)));
 	}
 	int halfplane_intersection(std::vector<line<T> > &s){
@@ -913,67 +913,70 @@ Code:.\Flow\KM.cpp
 ================
 
 ```cpp
-struct KM{
-// Maximum Bipartite Weighted Matching (Perfect Match)
-	static const int MXN = 650;
-	static const int INF = 2147483647; // long long
-	int n,match[MXN],vx[MXN],vy[MXN];
-	int edge[MXN][MXN],lx[MXN],ly[MXN],slack[MXN];
-	// ^^^^ long long
-	void init(int _n){
-		n = _n;
-		for (int i=0; i<n; i++)
-			for (int j=0; j<n; j++)
-				edge[i][j] = 0;
+#define MAXN 100
+int n;
+int g[MAXN][MAXN],lx[MAXN],ly[MAXN],slack_y[MAXN];
+int match_y[MAXN];
+bool vx[MAXN],vy[MAXN];//要保證g是完全二分圖
+bool dfs(int x,bool adjust=1){//DFS找增廣路，is=1表示要交換邊 
+	if(vx[x])return 0;
+	vx[x]=1;
+	for(int y=0;y<n;++y){
+		if(vy[y])continue;
+		int t=lx[x]+ly[y]-g[x][y];
+		if(t==0){
+			vy[y]=1;
+			if(match_y[y]==-1||dfs(match_y[y],adjust)){
+				if(adjust)match_y[y]=x;
+				return 1;
+			}
+		}else if(slack_y[y]>t)slack_y[y]=t;
 	}
-	void add_edge(int x, int y, int w){ // long long
-		edge[x][y] = w;
+	return 0;
+}
+inline int km(){
+	memset(ly,0,sizeof(int)*n);
+	memset(match_y,-1,sizeof(int)*n);
+	for(int x=0;x<n;++x){
+		lx[x]=0;
+		for(int y=0;y<n;++y){
+			lx[x]=max(lx[x],g[x][y]);
+		}
 	}
-	bool DFS(int x){
-		vx[x] = 1;
-		for (int y=0; y<n; y++){
-			if (vy[y]) continue;
-			if (lx[x]+ly[y] > edge[x][y]){
-				slack[y] = min(slack[y], lx[x]+ly[y]-edge[x][y]);
-			} else {
-				vy[y] = 1;
-				if (match[y] == -1 || DFS(match[y])){
-					match[y] = x;
-					return true;
+	for(int x=0;x<n;++x){
+		for(int y=0;y<n;++y)slack_y[y]=INT_MAX;
+		memset(vx,0,sizeof(bool)*n);
+		memset(vy,0,sizeof(bool)*n);
+		if(dfs(x))continue;
+		bool flag=1;
+		while(flag){
+			int cut=INT_MAX;
+			for(int y=0;y<n;++y){
+				if(!vy[y]&&cut>slack_y[y])cut=slack_y[y];
+			}
+			for(int j=0;j<n;++j){
+				if(vx[j])lx[j]-=cut;
+				if(vy[j])ly[j]+=cut;
+				else slack_y[j]-=cut;
+			}
+			for(int y=0;y<n;++y){
+				if(!vy[y]&&slack_y[y]==0){
+					vy[y]=1;
+					if(match_y[y]==-1||dfs(match_y[y],0)){
+						flag=0;//測試成功，有增廣路 
+						break;
+					}
 				}
 			}
 		}
-		return false;
+		memset(vx,0,sizeof(bool)*n);
+		memset(vy,0,sizeof(bool)*n);
+		dfs(x);//最後要記得將邊翻反轉 
 	}
-	int solve(){
-		fill(match,match+n,-1);
-		fill(lx,lx+n,-INF);
-		fill(ly,ly+n,0);
-		for (int i=0; i<n; i++)
-			for (int j=0; j<n; j++)
-				lx[i] = max(lx[i], edge[i][j]);
-		for (int i=0; i<n; i++){
-			fill(slack,slack+n,INF);
-			while (true){
-				fill(vx,vx+n,0);
-				fill(vy,vy+n,0);
-				if ( DFS(i) ) break;
-				int d = INF; // long long
-				for (int j=0; j<n; j++)
-					if (!vy[j]) d = min(d, slack[j]);
-				for (int j=0; j<n; j++){
-					if (vx[j]) lx[j] -= d;
-					if (vy[j]) ly[j] += d;
-					else slack[j] -= d;
-				}
-			}
-		}
-		int res=0;
-		for (int i=0; i<n; i++)
-			res += edge[match[i]][i];
-		return res;
-	}
-}graph;
+	int ans=0;
+	for(int y=0;y<n;++y)ans+=g[match_y[y]][y];
+	return ans;
+}
 
 ```
 
@@ -1078,6 +1081,63 @@ bool MST(int cost,int n,int root)
         root=ID[root];
     }
     return ans<=cost;
+}
+
+```
+
+Code:.\Graph\blossom matching.cpp
+================
+
+```cpp
+#define MAXN 505
+vector<int>g[MAXN];
+int pa[MAXN],match[MAXN],st[MAXN],S[MAXN],v[MAXN];
+int t,n;
+inline int lca(int x,int y){
+	for(++t;;swap(x,y)){
+		if(x==0)continue;
+		if(v[x]==t)return x;
+		v[x]=t;
+		x=st[pa[match[x]]];
+	}
+}
+#define qpush(x) q.push(x),S[x]=0
+inline void flower(int x,int y,int l,queue<int> &q){
+	while(st[x]!=l){
+		pa[x]=y;
+		if(S[y=match[x]]==1)qpush(y);
+		st[x]=st[y]=l,x=pa[y];
+	}
+}
+inline bool bfs(int x){
+	for(int i=1;i<=n;++i)st[i]=i;
+	memset(S+1,-1,sizeof(int)*n);
+	queue<int>q;qpush(x);
+	while(q.size()){
+		x=q.front(),q.pop();
+		for(size_t i=0;i<g[x].size();++i){
+			int y=g[x][i];
+			if(S[y]==-1){
+				pa[y]=x,S[y]=1;
+				if(!match[y]){
+					for(int lst;x;y=lst,x=pa[y])
+						lst=match[x],match[x]=y,match[y]=x;
+					return 1;
+				}
+				qpush(match[y]);
+			}else if(!S[y]&&st[y]!=st[x]){
+				int l=lca(y,x);
+				flower(y,x,l,q),flower(x,y,l,q);
+			}
+		}
+	}
+	return 0;
+}
+inline int blossom(){
+	int ans=0;
+	for(int i=1;i<=n;++i)
+		if(!match[i]&&bfs(i))++ans;
+	return ans;
 }
 
 ```
@@ -1486,6 +1546,28 @@ LL Tonelli_Shanks(const LL &n, const LL &p) {
         M = i;
     }
     return -1;
+}
+
+```
+
+Code:.\Number Theory\bit_set.cpp
+================
+
+```cpp
+void sub_set(int S){
+	int sub=S;
+	do{
+		//對某集合的子集合的處理 
+		sub=(sub-1)&S;
+	}while(sub!=S);
+}
+void k_sub_set(int k,int n){
+	int comb=(1<<k)-1,S=1<<n;
+	while(comb<S){
+		//對大小為k的子集合的處理 
+		int x=comb&-comb,y=comb+x;
+		comb=((comb&~y)/x>>1)|y;
+	}
 }
 
 ```
