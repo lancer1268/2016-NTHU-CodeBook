@@ -77,6 +77,7 @@ void merge(string root,int d=0)
 }
 int main()
 {
+    ss<<"# 2016-NTHU-CodeBook\n\n";
     fout.open("CodeBook.md");
     fout<<"Codebook\n=======\n\n";
     
@@ -84,7 +85,7 @@ int main()
     
     fout.close();
     cout<<endl;
-    fout.open("index.md");
-    fout<< ss.str() <<endl;
+    fout.open("README.md");
+    fout<< ss.str();
     fout.close();
 }
