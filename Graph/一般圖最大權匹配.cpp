@@ -18,23 +18,20 @@ inline int e_delta(const edge &e){ // does not work inside blossoms
 	return lab[e.u]+lab[e.v]-g[e.u][e.v].w*2;
 }
 inline void update_slack(int u,int x){
-	if(!slack[x]||e_delta(g[u][x])<e_delta(g[slack[x]][x]))
-		slack[x]=u;
+	if(!slack[x]||e_delta(g[u][x])<e_delta(g[slack[x]][x]))slack[x]=u;
 }
 inline void set_slack(int x){
 	slack[x]=0;
 	for(int u=1;u<=n;++u)
-		if(g[u][x].w>-INF&&st[u]!=x&&S[st[u]]==0)
-			update_slack(u,x);
+		if(g[u][x].w>-INF&&st[u]!=x&&S[st[u]]==0)update_slack(u,x);
 }
 void q_push(int x){
 	if(x<=n)q.push(x);
-	else for(size_t i=0;i<flower[x].size();i++)
-			q_push(flower[x][i]);
+	else for(size_t i=0;i<flower[x].size();i++)q_push(flower[x][i]);
 }
 inline int get_pr(int b,int xr){
 	int pr=find(flower[b].begin(),flower[b].end(),xr)-flower[b].begin();
-	if (pr%2==1){//檢查他在前一層圖是奇點還是偶點
+	if(pr%2==1){//檢查他在前一層圖是奇點還是偶點
 		reverse(flower[b].begin()+1,flower[b].end());
 		return (int)flower[b].size()-pr;
 	}else return pr;
@@ -44,8 +41,7 @@ inline void set_match(int u,int v){
 	if(u>n){
 		edge e=g[u][v];
 		int xr=flower_from[u][e.u],pr=get_pr(u,xr);
-		for(int i=0;i<pr;++i)
-			set_match(flower[u][i],flower[u][i^1]);
+		for(int i=0;i<pr;++i)set_match(flower[u][i],flower[u][i^1]);
 		set_match(xr,v);
 		rotate(flower[u].begin(),flower[u].begin()+pr,flower[u].end());
 	}
@@ -96,11 +92,11 @@ inline void add_blossom(int u,int lca,int v){
 	}
 	for(size_t i=0;i<flower[b].size();++i){
 		int xs=flower[b][i];
-		for(int x=1;x<=n_x;++x)
+		for(int x=1;x<=n_x;++x){
 			if(g[b][x].w==-INF||e_delta(g[xs][x])<e_delta(g[b][x]))
 				g[b][x]=g[xs][x],g[x][b]=g[x][xs];
-		for(int x=1;x<=n_x;++x)
 			if(flower_from[xs][x])flower_from[b][x]=xs;
+		}
 	}
 	set_slack(b);
 }
@@ -150,7 +146,8 @@ inline bool on_found_edge(const edge &e){
 	return false;
 }
 inline bool matching(){
-	for(int x=1;x<=n_x;++x)S[x]=-1,slack[x]=0;
+	memset(S+1,-1,sizeof(int)*n_x);
+	memset(slack+1,0,sizeof(int)*n_x);
 	q=queue<int>();
 	for(int x=1;x<=n_x;++x)
 		if(st[x]==x&&!match[x])pa[x]=0,S[x]=0,slack[x]=0,q_push(x);
@@ -188,30 +185,28 @@ inline bool matching(){
 			}
 		q=queue<int>();
 		for(int u=1;u<=n;++u)
-			if(lab[u]==0)return false; // all unmatched vertices' labels are zero! cheers!
+			if(lab[u]==0)return false;
 		for(int x=1;x<=n_x;++x)
-			if(st[x]==x&&slack[x]&&st[slack[x]]!=x&&e_delta(g[slack[x]][x])==0){
+			if(st[x]==x&&slack[x]&&st[slack[x]]!=x&&e_delta(g[slack[x]][x])==0)
 				if(on_found_edge(g[slack[x]][x]))return true;
-			}
 		for(int b=n+1;b<=n_x;++b)
 			if(st[b]==b&&S[b]==1&&lab[b]==0)expand_blossom1(b);
 	}
 	return false;
 }
 inline pair<long long,int> weight_blossom(){
-	for(int u=1;u<=n;++u)match[u]=0;
+	memset(match+1,0,sizeof(int)*n);
 	n_x=n;
 	int n_matches=0;
 	long long tot_weight=0;
 	for(int u=0;u<=n;++u)
 		st[u]=u,flower[u].clear();
+	int w_max=-INF;
 	for(int u=1;u<=n;++u)
-		for(int v=1;v<=n;++v)
+		for(int v=1;v<=n;++v){
 			flower_from[u][v]=(u==v?u:0);
-	int w_max=0;
-	for(int u=1;u<=n;++u)
-		for(int v=1;v<=n;++v)
 			w_max=max(w_max,g[u][v].w);
+		}
 	for(int u=1;u<=n;++u)lab[u]=w_max;
 	while(matching())++n_matches;
 	for(int u=1;u<=n;u++)
