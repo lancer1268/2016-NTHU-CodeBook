@@ -1,294 +1,241 @@
-#include<cstdio>
-#include<algorithm>
-#include<vector>
+#include<bits/stdc++.h>
 using namespace std;
-
-const int INF = 2147483647;
-const int MaxN = 400;
-const int MaxM = 79800;
-const int MaxNX = MaxN + MaxN;
-
+//from vfleaking
+//自己進行一些進行一些小修改 
+#define INF INT_MAX
+#define MAXN 400
 struct edge{
-	int v,u,w;
+	int u,v,w;
 	edge(){}
-	edge(const int _v, const int _u, const int _w):v(_v),u(_u),w(_w){}
+	edge(int u,int v,int w):u(u),v(v),w(w){}
 };
-
-int n,m;
-edge mat[MaxNX + 1][MaxNX + 1];
-
-int n_matches;
-long long tot_weight;
-int mate[MaxNX + 1];
-int lab[MaxNX + 1];
-
-int q_n, q[MaxN];
-int fa[MaxNX + 1], col[MaxNX + 1];
-int slackv[MaxNX + 1];
-
-int n_x;
-int bel[MaxNX + 1], blofrom[MaxNX + 1][MaxN + 1];
-vector<int> bloch[MaxNX + 1];
-
+int n,n_x;
+edge g[MAXN*2+1][MAXN*2+1];
+int lab[MAXN*2+1];
+int match[MAXN*2+1],slack[MAXN*2+1],st[MAXN*2+1],pa[MAXN*2+1];
+int flower_from[MAXN*2+1][MAXN+1],S[MAXN*2+1],vis[MAXN*2+1];
+vector<int> flower[MAXN*2+1];
+queue<int> q;
 inline int e_delta(const edge &e){ // does not work inside blossoms
-	return lab[e.v] + lab[e.u] - mat[e.v][e.u].w * 2;
+	return lab[e.u]+lab[e.v]-g[e.u][e.v].w*2;
 }
-inline void update_slackv(int v, int x){
-	if (!slackv[x] || e_delta(mat[v][x]) < e_delta(mat[slackv[x]][x]))
-		slackv[x] = v;
+inline void update_slack(int u,int x){
+	if(!slack[x]||e_delta(g[u][x])<e_delta(g[slack[x]][x]))
+		slack[x]=u;
 }
-inline void calc_slackv(int x){
-	slackv[x] = 0;
-	for (int v = 1; v <= n; v++)
-		if (mat[v][x].w > 0 && bel[v] != x && col[bel[v]] == 0)
-			update_slackv(v, x);
+inline void set_slack(int x){
+	slack[x]=0;
+	for(int u=1;u<=n;++u)
+		if(g[u][x].w>-INF&&st[u]!=x&&S[st[u]]==0)
+			update_slack(u,x);
 }
-
-inline void q_push(int x){
-	if (x <= n)q[q_n++] = x;
-	else{
-		for (size_t i = 0; i < bloch[x].size(); i++)
-			q_push(bloch[x][i]);
+void q_push(int x){
+	if(x<=n)q.push(x);
+	else for(size_t i=0;i<flower[x].size();i++)
+			q_push(flower[x][i]);
+}
+inline int get_pr(int b,int xr){
+	int pr=find(flower[b].begin(),flower[b].end(),xr)-flower[b].begin();
+	if (pr%2==1){//檢查他在前一層圖是奇點還是偶點
+		reverse(flower[b].begin()+1,flower[b].end());
+		return (int)flower[b].size()-pr;
+	}else return pr;
+}
+inline void set_match(int u,int v){
+	match[u]=g[u][v].v;
+	if(u>n){
+		edge e=g[u][v];
+		int xr=flower_from[u][e.u],pr=get_pr(u,xr);
+		for(int i=0;i<pr;++i)
+			set_match(flower[u][i],flower[u][i^1]);
+		set_match(xr,v);
+		rotate(flower[u].begin(),flower[u].begin()+pr,flower[u].end());
 	}
 }
-inline void set_mate(int xv, int xu){
-	mate[xv] = mat[xv][xu].u;
-	if (xv > n){
-		edge e = mat[xv][xu];
-		int xr = blofrom[xv][e.v];
-		int pr = find(bloch[xv].begin(), bloch[xv].end(), xr) - bloch[xv].begin();
-		if (pr % 2 == 1){
-			reverse(bloch[xv].begin() + 1, bloch[xv].end());
-			pr = (int)bloch[xv].size() - pr;
-		}
-
-		for (int i = 0; i < pr; i++)
-			set_mate(bloch[xv][i], bloch[xv][i^1]);
-		set_mate(xr, xu);
-
-		rotate(bloch[xv].begin(), bloch[xv].begin() + pr, bloch[xv].end());
-	}
+inline void set_st(int x,int b){
+	st[x]=b;
+	if(x>n)for(size_t i=0;i<flower[x].size();++i)
+			set_st(flower[x][i],b);
 }
-inline void set_bel(int x, int b){
-	bel[x] = b;
-	if (x > n){
-		for (size_t i = 0; i < bloch[x].size(); i++)
-			set_bel(bloch[x][i], b);
-	}
-}
-inline void augment(int xv, int xu){
+inline void augment(int u,int v){
 	for(;;){
-		int xnu = bel[mate[xv]];
-		set_mate(xv, xu);
-		if (!xnu)return;
-		set_mate(xnu, bel[fa[xnu]]);
-		xv = bel[fa[xnu]], xu = xnu;
+		int xnv=st[match[u]];
+		set_match(u,v);
+		if(!xnv)return;
+		set_match(xnv,st[pa[xnv]]);
+		u=st[pa[xnv]],v=xnv;
 	}
 }
-inline int get_lca(int xv, int xu){
-	static bool book[MaxNX + 1];
-	for (int x = 1; x <= n_x; x++)book[x]=false;
-	while(xv||xu){
-		if(xv){
-			if(book[xv])return xv;
-			book[xv] = true;
-			xv = bel[mate[xv]];
-			if(xv)xv = bel[fa[xv]];
-		}
-		swap(xv, xu);
+inline int get_lca(int u,int v){
+	static int t=0;
+	for(++t;u||v;swap(u,v)){
+		if(u==0)continue;
+		if(vis[u]==t)return u;
+		vis[u]=t;//這種方法可以不用清空v陣列 
+		u=st[match[u]];
+		if(u)u=st[pa[u]];
 	}
 	return 0;
 }
-inline void add_blossom(int xv, int xa, int xu){
+inline void add_blossom(int u,int lca,int v){
 	int b=n+1;
-	while(b <= n_x && bel[b])b++;
-	if(b > n_x)n_x++;
-
-	lab[b] = 0;
-	col[b] = 0;
-
-	mate[b] = mate[xa];
-
-	bloch[b].clear();
-	bloch[b].push_back(xa);
-	for (int x = xv; x != xa; x = bel[fa[bel[mate[x]]]])
-		bloch[b].push_back(x), bloch[b].push_back(bel[mate[x]]), q_push(bel[mate[x]]);
-	reverse(bloch[b].begin() + 1, bloch[b].end());
-	for (int x = xu; x != xa; x = bel[fa[bel[mate[x]]]])
-		bloch[b].push_back(x), bloch[b].push_back(bel[mate[x]]), q_push(bel[mate[x]]);
-
-	set_bel(b, b);
-
-	for (int x = 1; x <= n_x; x++){
-		mat[b][x].w = mat[x][b].w = 0;
-		blofrom[b][x] = 0;
+	while(b<=n_x&&st[b])++b;
+	if(b>n_x)++n_x;
+	lab[b]=0;
+	S[b]=0;
+	match[b]=match[lca];
+	flower[b].clear();
+	flower[b].push_back(lca);
+	for(int x=u,y;x!=lca;x=st[pa[y]])
+		flower[b].push_back(x),flower[b].push_back(y=st[match[x]]),q_push(y);
+	reverse(flower[b].begin()+1,flower[b].end());
+	for(int x=v,y;x!=lca;x=st[pa[y]])
+		flower[b].push_back(x),flower[b].push_back(y=st[match[x]]),q_push(y);
+	set_st(b,b);
+	for(int x=1;x<=n_x;++x){
+		g[b][x].w=g[x][b].w=-INF;
+		flower_from[b][x]=0;
 	}
-	for (size_t i = 0; i < bloch[b].size(); i++){
-		int xs = bloch[b][i];
-		for (int x = 1; x <= n_x; x++)
-			if (mat[b][x].w == 0 || e_delta(mat[xs][x]) < e_delta(mat[b][x]))
-				mat[b][x] = mat[xs][x], mat[x][b] = mat[x][xs];
-		for (int x = 1; x <= n_x; x++)
-			if (blofrom[xs][x])
-				blofrom[b][x] = xs;
+	for(size_t i=0;i<flower[b].size();++i){
+		int xs=flower[b][i];
+		for(int x=1;x<=n_x;++x)
+			if(g[b][x].w==-INF||e_delta(g[xs][x])<e_delta(g[b][x]))
+				g[b][x]=g[xs][x],g[x][b]=g[x][xs];
+		for(int x=1;x<=n_x;++x)
+			if(flower_from[xs][x])flower_from[b][x]=xs;
 	}
-	calc_slackv(b);
+	set_slack(b);
 }
-inline void expand_blossom1(int b){ // lab[b] == 1
-	for (size_t i = 0; i < bloch[b].size(); i++)
-		set_bel(bloch[b][i], bloch[b][i]);
-
-	int xr = blofrom[b][mat[b][fa[b]].v];
-	int pr = find(bloch[b].begin(), bloch[b].end(), xr) - bloch[b].begin();
-	if (pr % 2 == 1){
-		reverse(bloch[b].begin() + 1, bloch[b].end());
-		pr = (int)bloch[b].size() - pr;
-	}
-
-	for (int i = 0; i < pr; i += 2){
-		int xs = bloch[b][i], xns = bloch[b][i + 1];
-		fa[xs] = mat[xns][xs].v;
-		col[xs] = 1, col[xns] = 0;
-		slackv[xs] = 0, calc_slackv(xns);
+inline void expand_blossom1(int b){ // S[b] == 1
+	for(size_t i=0;i<flower[b].size();++i)
+		set_st(flower[b][i],flower[b][i]);
+	int xr=flower_from[b][g[b][pa[b]].u],pr=get_pr(b,xr);
+	for(int i=0;i<pr;i+=2){
+		int xs=flower[b][i],xns=flower[b][i+1];
+		pa[xs]=g[xns][xs].u;
+		S[xs]=1,S[xns]=0;
+		slack[xs]=0,set_slack(xns);
 		q_push(xns);
 	}
-	col[xr] = 1;
-	fa[xr] = fa[b];
-	for (size_t i = pr + 1; i < bloch[b].size(); i++){
-		int xs = bloch[b][i];
-		col[xs] = -1;
-		calc_slackv(xs);
+	S[xr]=1,pa[xr]=pa[b];
+	for(size_t i=pr+1;i<flower[b].size();++i){
+		int xs=flower[b][i];
+		S[xs]=-1,set_slack(xs);
 	}
-
-	bel[b] = 0;
+	st[b]=0;
 }
-inline void expand_blossom_final(int b){ // at the final stage
-	for (size_t i = 0; i < bloch[b].size(); i++){
-		if (bloch[b][i] > n && lab[bloch[b][i]] == 0)
-			expand_blossom_final(bloch[b][i]);
-		else
-			set_bel(bloch[b][i], bloch[b][i]);
+void expand_blossom_final(int b){ // at the final stage
+	for(size_t i=0;i<flower[b].size();++i){
+		if(flower[b][i]>n&&lab[flower[b][i]]==0)
+			expand_blossom_final(flower[b][i]);
+		else set_st(flower[b][i],flower[b][i]);
 	}
-	bel[b] = 0;
+	st[b]=0;
 }
 inline bool on_found_edge(const edge &e){
-	int xv = bel[e.v], xu = bel[e.u];
-	if (col[xu] == -1){
-		int nv = bel[mate[xu]];
-		fa[xu] = e.v;
-		col[xu] = 1, col[nv] = 0;
-		slackv[xu] = slackv[nv] = 0;
-		q_push(nv);
-	}else if (col[xu] == 0){
-		int xa = get_lca(xv, xu);
-		if (!xa){
-			augment(xv, xu), augment(xu, xv);
-			for (int b = n + 1; b <= n_x; b++)
-				if (bel[b] == b && lab[b] == 0)
-					expand_blossom_final(b);
+	int u=st[e.u],v=st[e.v];
+	if(S[v]==-1){
+		pa[v]=e.u,S[v]=1;
+		int nu=st[match[v]];
+		S[nu]=0;
+		slack[v]=slack[nu]=0;
+		q_push(nu);
+	}else if(S[v]==0){
+		int lca=get_lca(u,v);
+		if(!lca){
+			augment(u,v),augment(v,u);
+			for(int b=n+1;b<=n_x;++b)
+				if(st[b]==b&&lab[b]==0)expand_blossom_final(b);
 			return true;
-		}else add_blossom(xv, xa, xu);
+		}else add_blossom(u,lca,v);
 	}
 	return false;
 }
-bool match(){
-	for (int x = 1; x <= n_x; x++)col[x]=-1,slackv[x]=0;
-	q_n = 0;
-	
-	for(int x = 1; x <= n_x; x++)
-		if (bel[x] == x && !mate[x])
-			fa[x] = 0, col[x] = 0, slackv[x] = 0, q_push(x);
-	if(q_n == 0)return false;
-
+inline bool matching(){
+	for(int x=1;x<=n_x;++x)S[x]=-1,slack[x]=0;
+	q=queue<int>();
+	for(int x=1;x<=n_x;++x)
+		if(st[x]==x&&!match[x])pa[x]=0,S[x]=0,slack[x]=0,q_push(x);
+	if(q.empty())return false;
 	for(;;){
-		for (int i = 0; i < q_n; i++){
-			int v = q[i];
-			for (int u = 1; u <= n; u++)
-				if (mat[v][u].w > 0 && bel[v] != bel[u]){
-					int d = e_delta(mat[v][u]);
-					if (d == 0){
-						if (on_found_edge(mat[v][u]))return true;
-					}else if (col[bel[u]] == -1 || col[bel[u]] == 0)
-						update_slackv(v, bel[u]);
+		while(q.size()){
+			int u=q.front();q.pop();
+			for(int v=1;v<=n;++v)
+				if(g[u][v].w>-INF&&st[u]!=st[v]){
+					if(S[st[u]]==1)continue;
+					int d=e_delta(g[u][v]);
+					if(d==0){
+						if(on_found_edge(g[u][v]))return true;
+					}else update_slack(u,st[v]);
 				}
 		}
-
-		int d = INF;
-		for (int v = 1; v <= n; v++)
-			if (col[bel[v]] == 0)
-				d=min(d, lab[v]);
-		for (int b = n + 1; b <= n_x; b++)
-			if (bel[b] == b && col[b] == 1)
-				d=min(d, lab[b] / 2);
-		for (int x = 1; x <= n_x; x++)
-			if (bel[x] == x && slackv[x]){
-				if (col[x] == -1)
-					d=min(d, e_delta(mat[slackv[x]][x]));
-				else if (col[x] == 0)
-					d=min(d, e_delta(mat[slackv[x]][x]) / 2);
+		int d=INF;
+		for(int u=1;u<=n;++u)
+			if(S[st[u]]==0)d=min(d,lab[u]);
+		for(int b=n+1;b<=n_x;++b)
+			if(st[b]==b&&S[b]==1)d=min(d,lab[b]/2);
+		for(int x=1;x<=n_x;++x)
+			if(st[x]==x&&slack[x]){
+				if(S[x]==-1)d=min(d,e_delta(g[slack[x]][x]));
+				else if(S[x]==0)d=min(d,e_delta(g[slack[x]][x])/2);
 			}
-
-		for (int v = 1; v <= n; v++){
-			if (col[bel[v]] == 0)lab[v] -= d;
-			else if (col[bel[v]] == 1)lab[v] += d;
+		for(int u=1;u<=n;++u){
+			if(S[st[u]]==0)lab[u]-=d;
+			else if(S[st[u]]==1)lab[u]+=d;
 		}
-		for (int b = n + 1; b <= n_x; b++)
-			if (bel[b] == b){
-				if (col[bel[b]] == 0)lab[b] += d * 2;
-				else if (col[bel[b]] == 1)lab[b] -= d * 2;
+		for(int b=n+1;b<=n_x;++b)
+			if(st[b]==b){
+				if(S[st[b]]==0)lab[b]+=d*2;
+				else if(S[st[b]]==1)lab[b]-=d*2;
 			}
-
-		q_n = 0;
-		for (int v = 1; v <= n; v++)
-			if(lab[v]==0)return false; // all unmatched vertices' labels are zero! cheers!
-		for (int x = 1; x <= n_x; x++)
-			if(bel[x]==x&&slackv[x]&&bel[slackv[x]]!=x&&e_delta(mat[slackv[x]][x])==0){
-				if (on_found_edge(mat[slackv[x]][x]))return true;
+		q=queue<int>();
+		for(int u=1;u<=n;++u)
+			if(lab[u]==0)return false; // all unmatched vertices' labels are zero! cheers!
+		for(int x=1;x<=n_x;++x)
+			if(st[x]==x&&slack[x]&&st[slack[x]]!=x&&e_delta(g[slack[x]][x])==0){
+				if(on_found_edge(g[slack[x]][x]))return true;
 			}
-		for (int b = n + 1; b <= n_x; b++)
-			if (bel[b] == b && col[b] == 1 && lab[b] == 0)
-				expand_blossom1(b);
+		for(int b=n+1;b<=n_x;++b)
+			if(st[b]==b&&S[b]==1&&lab[b]==0)expand_blossom1(b);
 	}
 	return false;
 }
-void calc_max_weight_match(){
-	for (int v = 1; v <= n; v++)mate[v] = 0;
-
-	n_x = n;
-	n_matches = 0;
-	tot_weight = 0;
-
-	bel[0]=0;
-	for(int v = 1; v <= n; v++)
-		bel[v] = v, bloch[v].clear();
-	for (int v = 1; v <= n; v++)
-		for (int u = 1; u <= n; u++)
-			blofrom[v][u] = v == u ? v : 0;
-
-	int w_max = 0;
-	for (int v = 1; v <= n; v++)
-		for (int u = 1; u <= n; u++)
-			w_max=max(w_max, mat[v][u].w);
-	for (int v = 1; v <= n; v++)lab[v] = w_max;
-
-	while (match())n_matches++;
-
-	for (int v = 1; v <= n; v++)
-		if (mate[v] && mate[v] < v)
-			tot_weight += mat[v][mate[v]].w;
+inline pair<long long,int> weight_blossom(){
+	for(int u=1;u<=n;++u)match[u]=0;
+	n_x=n;
+	int n_matches=0;
+	long long tot_weight=0;
+	for(int u=0;u<=n;++u)
+		st[u]=u,flower[u].clear();
+	for(int u=1;u<=n;++u)
+		for(int v=1;v<=n;++v)
+			flower_from[u][v]=(u==v?u:0);
+	int w_max=0;
+	for(int u=1;u<=n;++u)
+		for(int v=1;v<=n;++v)
+			w_max=max(w_max,g[u][v].w);
+	for(int u=1;u<=n;++u)lab[u]=w_max;
+	while(matching())++n_matches;
+	for(int u=1;u<=n;u++)
+		if(match[u]&&match[u]<u)
+			tot_weight+=g[u][match[u]].w;
+	return make_pair(tot_weight,n_matches);
+}
+inline void init_weight_graph(){
+	for(int u=1;u<=n;++u)
+		for(int v=1;v<=n;++v)
+			g[u][v]=edge(u,v,-INF);
 }
 int main(){
+	int m;
 	scanf("%d%d",&n,&m);
-	for (int v = 1; v <= n; v++)
-		for (int u = 1; u <= n; u++)
-			mat[v][u] = edge(v, u, 0);
-	for (int i = 0; i < m; i++){
-		int v,u,w;
-		scanf("%d%d%d",&v,&u,&w);
-		mat[v][u].w = mat[u][v].w = w;
+	init_weight_graph();
+	for(int i=0;i<m;++i){
+		int u,v,w;
+		scanf("%d%d%d",&u,&v,&w);
+		g[u][v].w=g[v][u].w=w;
 	}
-	calc_max_weight_match();
-	printf("%lld\n", tot_weight);
-	for (int v = 1; v <= n; v++)printf("%d ", mate[v]);puts("");
+	printf("%lld\n",weight_blossom().first);
+	for(int u=1;u<=n;++u)printf("%d ",match[u]);puts("");
 	return 0;
 }
