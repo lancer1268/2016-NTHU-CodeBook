@@ -1,7 +1,5 @@
 #include<bits/stdc++.h>
 using namespace std;
-//from vfleaking
-//自己進行一些進行一些小修改 
 #define INF INT_MAX
 #define MAXN 400
 struct edge{
