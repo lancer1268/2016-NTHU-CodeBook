@@ -29,6 +29,11 @@ void q_push(int x){
 	if(x<=n)q.push(x);
 	else for(size_t i=0;i<flower[x].size();i++)q_push(flower[x][i]);
 }
+inline void set_st(int x,int b){
+	st[x]=b;
+	if(x>n)for(size_t i=0;i<flower[x].size();++i)
+			set_st(flower[x][i],b);
+}
 inline int get_pr(int b,int xr){
 	int pr=find(flower[b].begin(),flower[b].end(),xr)-flower[b].begin();
 	if(pr%2==1){//檢查他在前一層圖是奇點還是偶點
@@ -45,11 +50,6 @@ inline void set_match(int u,int v){
 		set_match(xr,v);
 		rotate(flower[u].begin(),flower[u].begin()+pr,flower[u].end());
 	}
-}
-inline void set_st(int x,int b){
-	st[x]=b;
-	if(x>n)for(size_t i=0;i<flower[x].size();++i)
-			set_st(flower[x][i],b);
 }
 inline void augment(int u,int v){
 	for(;;){
@@ -75,8 +75,7 @@ inline void add_blossom(int u,int lca,int v){
 	int b=n+1;
 	while(b<=n_x&&st[b])++b;
 	if(b>n_x)++n_x;
-	lab[b]=0;
-	S[b]=0;
+	lab[b]=0,S[b]=0;
 	match[b]=match[lca];
 	flower[b].clear();
 	flower[b].push_back(lca);
@@ -131,9 +130,8 @@ inline bool on_found_edge(const edge &e){
 	if(S[v]==-1){
 		pa[v]=e.u,S[v]=1;
 		int nu=st[match[v]];
-		S[nu]=0;
 		slack[v]=slack[nu]=0;
-		q_push(nu);
+		S[nu]=0,q_push(nu);
 	}else if(S[v]==0){
 		int lca=get_lca(u,v);
 		if(!lca){
@@ -150,7 +148,7 @@ inline bool matching(){
 	memset(slack+1,0,sizeof(int)*n_x);
 	q=queue<int>();
 	for(int x=1;x<=n_x;++x)
-		if(st[x]==x&&!match[x])pa[x]=0,S[x]=0,slack[x]=0,q_push(x);
+		if(st[x]==x&&!match[x])pa[x]=0,S[x]=0,q_push(x);
 	if(q.empty())return false;
 	for(;;){
 		while(q.size()){
@@ -199,8 +197,7 @@ inline pair<long long,int> weight_blossom(){
 	n_x=n;
 	int n_matches=0;
 	long long tot_weight=0;
-	for(int u=0;u<=n;++u)
-		st[u]=u,flower[u].clear();
+	for(int u=0;u<=n;++u)st[u]=u,flower[u].clear();
 	int w_max=-INF;
 	for(int u=1;u<=n;++u)
 		for(int v=1;v<=n;++v){
