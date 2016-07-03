@@ -23,7 +23,7 @@ inline void update_slack(int u,int x){
 inline void set_slack(int x){
 	slack[x]=0;
 	for(int u=1;u<=n;++u)
-		if(g[u][x].w>-INF&&st[u]!=x&&S[st[u]]==0)update_slack(u,x);
+		if(g[u][x].w>0&&st[u]!=x&&S[st[u]]==0)update_slack(u,x);
 }
 void q_push(int x){
 	if(x<=n)q.push(x);
@@ -85,21 +85,19 @@ inline void add_blossom(int u,int lca,int v){
 	for(int x=v,y;x!=lca;x=st[pa[y]])
 		flower[b].push_back(x),flower[b].push_back(y=st[match[x]]),q_push(y);
 	set_st(b,b);
-	for(int x=1;x<=n_x;++x){
-		g[b][x].w=g[x][b].w=-INF;
-		flower_from[b][x]=0;
-	}
+	for(int x=1;x<=n_x;++x)g[b][x].w=g[x][b].w=0;
+	for(int x=1;x<=n;++x)flower_from[b][x]=0;
 	for(size_t i=0;i<flower[b].size();++i){
 		int xs=flower[b][i];
-		for(int x=1;x<=n_x;++x){
-			if(g[b][x].w==-INF||e_delta(g[xs][x])<e_delta(g[b][x]))
+		for(int x=1;x<=n_x;++x)
+			if(g[b][x].w==0||e_delta(g[xs][x])<e_delta(g[b][x]))
 				g[b][x]=g[xs][x],g[x][b]=g[x][xs];
+		for(int x=1;x<=n;++x)
 			if(flower_from[xs][x])flower_from[b][x]=xs;
-		}
 	}
 	set_slack(b);
 }
-inline void expand_blossom1(int b){ // S[b] == 1
+inline void expand_blossom(int b){ // S[b] == 1
 	for(size_t i=0;i<flower[b].size();++i)
 		set_st(flower[b][i],flower[b][i]);
 	int xr=flower_from[b][g[b][pa[b]].u],pr=get_pr(b,xr);
@@ -117,14 +115,6 @@ inline void expand_blossom1(int b){ // S[b] == 1
 	}
 	st[b]=0;
 }
-void expand_blossom_final(int b){ // at the final stage
-	for(size_t i=0;i<flower[b].size();++i){
-		if(flower[b][i]>n&&lab[flower[b][i]]==0)
-			expand_blossom_final(flower[b][i]);
-		else set_st(flower[b][i],flower[b][i]);
-	}
-	st[b]=0;
-}
 inline bool on_found_edge(const edge &e){
 	int u=st[e.u],v=st[e.v];
 	if(S[v]==-1){
@@ -136,8 +126,6 @@ inline bool on_found_edge(const edge &e){
 		int lca=get_lca(u,v);
 		if(!lca){
 			augment(u,v),augment(v,u);
-			for(int b=n+1;b<=n_x;++b)
-				if(st[b]==b&&lab[b]==0)expand_blossom_final(b);
 			return true;
 		}else add_blossom(u,lca,v);
 	}
@@ -153,18 +141,15 @@ inline bool matching(){
 	for(;;){
 		while(q.size()){
 			int u=q.front();q.pop();
+			if(S[st[u]]==1)continue;
 			for(int v=1;v<=n;++v)
-				if(g[u][v].w>-INF&&st[u]!=st[v]){
-					if(S[st[u]]==1)continue;
-					int d=e_delta(g[u][v]);
-					if(d==0){
+				if(g[u][v].w>0&&st[u]!=st[v]){
+					if(e_delta(g[u][v])==0){
 						if(on_found_edge(g[u][v]))return true;
 					}else update_slack(u,st[v]);
 				}
 		}
 		int d=INF;
-		for(int u=1;u<=n;++u)
-			if(S[st[u]]==0)d=min(d,lab[u]);
 		for(int b=n+1;b<=n_x;++b)
 			if(st[b]==b&&S[b]==1)d=min(d,lab[b]/2);
 		for(int x=1;x<=n_x;++x)
@@ -173,8 +158,10 @@ inline bool matching(){
 				else if(S[x]==0)d=min(d,e_delta(g[slack[x]][x])/2);
 			}
 		for(int u=1;u<=n;++u){
-			if(S[st[u]]==0)lab[u]-=d;
-			else if(S[st[u]]==1)lab[u]+=d;
+			if(S[st[u]]==0){
+				if(lab[u]<=d)return 0;
+				lab[u]-=d;
+			}else if(S[st[u]]==1)lab[u]+=d;
 		}
 		for(int b=n+1;b<=n_x;++b)
 			if(st[b]==b){
@@ -182,13 +169,11 @@ inline bool matching(){
 				else if(S[st[b]]==1)lab[b]-=d*2;
 			}
 		q=queue<int>();
-		for(int u=1;u<=n;++u)
-			if(lab[u]==0)return false;
 		for(int x=1;x<=n_x;++x)
 			if(st[x]==x&&slack[x]&&st[slack[x]]!=x&&e_delta(g[slack[x]][x])==0)
 				if(on_found_edge(g[slack[x]][x]))return true;
 		for(int b=n+1;b<=n_x;++b)
-			if(st[b]==b&&S[b]==1&&lab[b]==0)expand_blossom1(b);
+			if(st[b]==b&&S[b]==1&&lab[b]==0)expand_blossom(b);
 	}
 	return false;
 }
@@ -198,7 +183,7 @@ inline pair<long long,int> weight_blossom(){
 	int n_matches=0;
 	long long tot_weight=0;
 	for(int u=0;u<=n;++u)st[u]=u,flower[u].clear();
-	int w_max=-INF;
+	int w_max=0;
 	for(int u=1;u<=n;++u)
 		for(int v=1;v<=n;++v){
 			flower_from[u][v]=(u==v?u:0);
@@ -206,7 +191,7 @@ inline pair<long long,int> weight_blossom(){
 		}
 	for(int u=1;u<=n;++u)lab[u]=w_max;
 	while(matching())++n_matches;
-	for(int u=1;u<=n;u++)
+	for(int u=1;u<=n;++u)
 		if(match[u]&&match[u]<u)
 			tot_weight+=g[u][match[u]].w;
 	return make_pair(tot_weight,n_matches);
@@ -214,7 +199,7 @@ inline pair<long long,int> weight_blossom(){
 inline void init_weight_graph(){
 	for(int u=1;u<=n;++u)
 		for(int v=1;v<=n;++v)
-			g[u][v]=edge(u,v,-INF);
+			g[u][v]=edge(u,v,0);
 }
 int main(){
 	int m;
