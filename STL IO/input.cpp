@@ -1,4 +1,4 @@
-inline int read()
+ï»¿inline int read()
 {
     int x=0; bool f=0; char c=getchar();
     while(ch<'0'||'9'<ch)f|=ch=='-',ch=getchar();
@@ -6,7 +6,7 @@ inline int read()
     return f?-x:x;
 }
 inline int read()
-{//¿é¤J¤£¥i¥H¥]§t : ; < > = ? 
+{//è¼¸å…¥ä¸å¯ä»¥åŒ…å« : ; < > = ? 
     int x=0; bool f=0; char c=getchar();
     while((c>>4)&3!=3)f|=ch=='-',c=getchar();
     while((c>>4)&3==3)x=x*10-'0'+c,c=getchar();
