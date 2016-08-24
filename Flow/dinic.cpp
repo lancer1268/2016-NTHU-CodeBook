@@ -1,48 +1,68 @@
-#include<string.h>
-#include<queue>
-#include<algorithm>
-#define MAXN 100+5
-int n,m;/*é»æ•¸ã€é‚Šæ•¸*/
-/*å®¹é‡ä¸Šé™ã€æµé‡ã€å‰©é¤˜å®¹é‡*/ 
-int g[MAXN][MAXN],f[MAXN][MAXN],r[MAXN][MAXN];
-int level[MAXN];/*å±¤æ¬¡*/ 
-int bfs(int s,int t){
-	memset(level,0,sizeof(level));
-	std::queue<int>q;
+#define MAXN 105
+#define INF INT_MAX
+int n;/*ÂI¼Æ*/
+int level[MAXN],cur[MAXN];/*¼h¦¸¡B·í«e©·Àu¤Æ*/
+struct edge{
+	int v,pre;
+	long long cap,flow,r;
+	edge(int v,int pre,long long cap):v(v),pre(pre),cap(cap),flow(0),r(cap){}
+};
+int g[MAXN];
+std::vector<edge> e;
+inline void init(){
+	memset(g,-1,sizeof(int)*(n+1));
+	e.clear();
+}
+inline void add_edge(int u,int v,long long cap,bool directed=false){
+	e.push_back(edge(v,g[u],cap));
+	g[u]=e.size()-1;
+	e.push_back(edge(u,g[v],directed?0:cap));
+	g[v]=e.size()-1;
+}
+inline int bfs(int s,int t){
+	memset(level,0,sizeof(int)*(n+1));
+	memcpy(cur,g,sizeof(int)*(n+1));
+	std::queue<int >q;
 	q.push(s);
 	level[s]=1;
-	while(!q.empty()){
-		int x=q.front();q.pop();
-		for(int i=1;i<=n;++i){
-			if(!level[i]&&r[x][i]){
-				level[i]=level[x]+1;
-				q.push(i);
+	while(q.size()){
+		int u=q.front();q.pop();
+		for(int i=g[u];~i;i=e[i].pre){
+			if(!level[e[i].v]&&e[i].r){
+				level[e[i].v]=level[u]+1;
+				q.push(e[i].v);
+				if(e[i].v==t)return 1;
 			}
 		}
 	}
-	return level[t]!=0;
+	return 0;
 }
-int dfs(int x,int flow,int t){
-	if(x==t)return flow;
-	int rf=flow,tmp;
-	for(int i=1;i<=n&&rf;++i){
-		if(level[i]==level[x]+1&&r[x][i]){
-			tmp=dfs(i,std::min(rf,r[x][i]),t);
-			f[x][i]+=tmp;
-			f[i][x]-=tmp;
-			r[x][i]=g[x][i]-f[x][i];
-			r[i][x]=g[i][x]-f[i][x];
-			if(!(rf-=tmp))return flow;
+long long dfs(int u,int t,long long cur_flow=INF){
+	if(u==t||!cur_flow)return cur_flow;
+	long long df,tf=0;
+	for(int &i=cur[u];~i;i=e[i].pre){
+		if(level[e[i].v]==level[u]+1&&e[i].r){
+			if(df=dfs(e[i].v,t,std::min(cur_flow,e[i].r))){
+				e[i].flow+=df;
+				e[i^1].flow-=df;
+				e[i].r-=df;
+				e[i^1].r+=df;
+				tf+=df;
+				if(!(cur_flow-=df))break;
+			}
 		}
 	}
-	return flow-rf;
+	if(!df)level[u]=0;
+	return tf;
 }
-int dinic(int s,int t){
-	memset(f,0,sizeof(f));
-	memcpy(r,g,sizeof(g));
-	int ret=0,f=0;
-	while(bfs(s,t)){
-		while((f=dfs(s,INT_MAX,t)))ret+=f;
+inline long long dinic(int s,int t,bool clean=true){
+	if(clean){
+		for(size_t i=0;i<e.size();++i){
+			e[i].flow=0;
+			e[i].r=e[i].cap;
+		}
 	}
-	return ret;
+	long long ans=0;
+	while(bfs(s,t))ans+=dfs(s,t);
+	return ans;
 }
