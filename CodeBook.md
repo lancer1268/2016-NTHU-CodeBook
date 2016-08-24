@@ -337,140 +337,6 @@ inline T closest_pair(vector<point<T> > &v){
 
 ```
 
-Code:.\Data Structure\Dynemic KD tree erase.cpp
-================
-
-```cpp
-#ifndef SUNMOON_KD_TREE
-#define SUNMOON_KD_TREE
-#include<algorithm>
-#include<queue>
-#define T int
-#define kd 2 /*æœ‰kdç¶­*/
-#define MAXN 200005 /*æœ€å¤§å¯ä»¥æ’å…¥çš„æ•¸é‡*/
-#define INF 999999999
-int sort_id;
-struct point{
-	T d[kd];
-	int id;
-	inline T dist(const point &x)const{
-		T ret=0;
-		for(int i=0;i<kd;++i)ret+=std::abs(d[i]-x.d[i]);
-		return ret;
-	}
-	inline bool operator==(const point &b)const{
-		for(int i=0;i<kd;++i)if(d[i]!=b.d[i])return 0;
-		return 1;
-	}
-	inline bool operator<(const point &b)const{
-		return d[sort_id]<b.d[sort_id];
-	}
-};
-class kd_tree{
-	private:
-		struct node{
-			node *l,*r;
-			point pid;
-			node(const point &p):l(0),r(0),pid(p){}
-		}*root,*A[MAXN];
-		int s;
-		struct cmp{
-			inline bool operator()(const node*x,const node*y)const{
-				return x->pid<y->pid;
-			}
-		};
-		node* build(int k,int l,int r){
-			if(l>r)return 0;
-			if(k==kd)k=0;
-			int mid=(l+r)/2;
-			sort_id=k;
-			std::nth_element(A+l,A+mid,A+r+1,cmp());
-			node *ret=A[mid];
-			ret->l=build(k+1,l,mid-1);
-			ret->r=build(k+1,mid+1,r);
-			return ret;
-		}
-		node **mnp;
-		int mnk;
-		void findmin(node*&o,int d,int k){
-			if(!o)return;
-			if(!mnp||o->pid.d[d]<(*mnp)->pid.d[d]){
-				mnp=&o;
-				mnk=k;
-			}
-			findmin(o->l,d,(k+1)%kd);
-			if(d==k)return;
-			findmin(o->r,d,(k+1)%kd);
-		}
-		inline int heuristic(const int h[])const{
-			int ret=0;
-			for(int i=0;i<kd;++i)ret+=h[i];
-			return ret;
-		}
-		void nearest(node *&u,int k,const point &x,T *h,T &mndist){
-			if(u==0||heuristic(h)>=mndist)return;
-			point now=u->pid;
-			int dist=u->pid.dist(x),old=h[k];
-			if(dist<mndist){
-				mnp=&u;
-				mnk=k;
-				if(!(mndist=dist))return;
-			}
-			if(x.d[k]<u->pid.d[k]){
-				nearest(u->l,(k+1)%kd,x,h,mndist);
-				h[k]=abs(x.d[k]-u->pid.d[k]);
-				nearest(u->r,(k+1)%kd,x,h,mndist);
-			}else{
-				nearest(u->r,(k+1)%kd,x,h,mndist);
-				h[k]=abs(x.d[k]-u->pid.d[k]);
-				nearest(u->l,(k+1)%kd,x,h,mndist);
-			}
-			h[k]=old;
-		}
-	public:
-		inline void clear(){
-			for(int i=0;i<s;++i)delete A[i];
-			root=0;
-			s=0;
-		}
-		inline void build(int n,const point *p){
-			s=n;
-			for(int i=0;i<n;++i)A[i]=new node(p[i]);
-			root=build(0,0,n-1);
-		}
-		inline bool erase(point p){
-			T mndist=1,h[kd]={};
-			nearest(root,0,p,h,mndist);
-			if(mndist)return 0;
-			for(node **o=mnp;;){
-				if((*o)->r);
-				else if((*o)->l){
-					(*o)->r=(*o)->l;
-					(*o)->l=0;
-				}else{
-					(*o)=0;
-					return 1;
-				}
-				mnp=0;
-				findmin((*o)->r,mnk,(mnk+1)%kd);
-				(*o)->pid=(*mnp)->pid;
-				o=mnp;
-			}
-		}
-		inline T nearest(const point &x){
-			T mndist=INF,h[kd]={};
-			nearest(root,0,x,h,mndist);
-			return mndist;/*å›å‚³é›¢xç¬¬kè¿‘çš„é»çš„è·é›¢*/ 
-		}
-};
-#undef T
-#undef kd
-#undef MAXN
-#undef INF
-#endif
-
-```
-
 Code:.\Data Structure\Dynemic KD tree.cpp
 ================
 
@@ -478,27 +344,29 @@ Code:.\Data Structure\Dynemic KD tree.cpp
 #ifndef SUNMOON_DYNEMIC_KD_TREE
 #define SUNMOON_DYNEMIC_KD_TREE
 #include<algorithm>
+#include<vector>
 #include<queue>
 #include<cmath>
-#define T int
-#define kd 2 /*æœ‰kdç¶­*/
-#define MAXN 100005 /*æœ€å¤§å¯ä»¥æ’å…¥çš„æ•¸é‡*/
-#define INF 999999999
-const double alpha=0.75,loga=log2(1.0/alpha);
-int sort_id;
-struct point{
-	T d[kd];
-	int id;
-	inline T dist(const point &x)const{
-		T ret=0;
-		for(int i=0;i<kd;++i)ret+=std::abs(d[i]-x.d[i]);
-		return ret;
-	}
-	inline bool operator<(const point &b)const{
-		return d[sort_id]<b.d[sort_id];
-	}
-};
+template<typename T,size_t kd>//kdªí¥Ü¦³´X­Óºû«× 
 class kd_tree{
+	public:
+		struct point{
+			T d[kd];
+			inline T dist(const point &x)const{
+				T ret=0;
+				for(size_t i=0;i<kd;++i)ret+=std::abs(d[i]-x.d[i]);
+				return ret;
+			}
+			inline bool operator==(const point &p){
+				for(size_t i=0;i<kd;++i){
+					if(d[i]!=p.d[i])return 0;
+				}
+				return 1;
+			}
+			inline bool operator<(const point &b)const{
+				return d[0]<b.d[0];
+			}
+		};
 	private:
 		struct node{
 			node *l,*r;
@@ -508,14 +376,24 @@ class kd_tree{
 			inline void up(){
 				s=(l?l->s:0)+1+(r?r->s:0);
 			}
-		}*root,*A[MAXN];
-		int qM;
-		std::priority_queue<std::pair<T,point > >pQ;
-		struct cmp{
+		}*root;
+		const double alpha,loga;
+		const T INF;//°O±o­nµ¹INF¡Aªí¥Ü·¥¤j­È 
+		int maxn;
+		struct __cmp{
+			int sort_id;
 			inline bool operator()(const node*x,const node*y)const{
-				return x->pid<y->pid;
+				return operator()(x->pid,y->pid);
 			}
-		};
+			inline bool operator()(const point &x,const point &y)const{
+				if(x.d[sort_id]!=y.d[sort_id])
+					return x.d[sort_id]<y.d[sort_id];
+				for(size_t i=0;i<kd;++i){
+					if(x.d[i]!=y.d[i])return x.d[i]<y.d[i];
+				}
+				return 0;
+			}
+		}cmp;
 		void clear(node *o){
 			if(!o)return;
 			clear(o->l);
@@ -525,12 +403,13 @@ class kd_tree{
 		inline int size(node *o){
 			return o?o->s:0;
 		}
+		std::vector<node*> A;
 		node* build(int k,int l,int r){
 			if(l>r)return 0;
 			if(k==kd)k=0;
 			int mid=(l+r)/2;
-			sort_id=k;
-			std::nth_element(A+l,A+mid,A+r+1,cmp());
+			cmp.sort_id=k;
+			std::nth_element(A.begin()+l,A.begin()+mid,A.begin()+r+1,cmp);
 			node *ret=A[mid];
 			ret->l=build(k+1,l,mid-1);
 			ret->r=build(k+1,mid+1,r);
@@ -540,11 +419,17 @@ class kd_tree{
 		inline bool isbad(node*o){
 			return size(o->l)>alpha*o->s||size(o->r)>alpha*o->s;
 		}
-		void flatten(node *u,node **&buf){
+		void flatten(node *u,typename std::vector<node*>::iterator &it){
 			if(!u)return;
-			flatten(u->l,buf);
-			*buf=u,++buf;
-			flatten(u->r,buf);
+			flatten(u->l,it);
+			*it=u;
+			flatten(u->r,++it);
+		}
+		inline void rebuild(node*&u,int k){
+			if((int)A.size()<u->s)A.resize(u->s);
+			typename std::vector<node*>::iterator it=A.begin();
+			flatten(u,it);
+			u=build(k,0,u->s-1);
 		}
 		bool insert(node*&u,int k,const point &x,int dep){
 			if(!u){
@@ -552,23 +437,56 @@ class kd_tree{
 				return dep<=0;
 			}
 			++u->s;
-			if(insert(x.d[k]<u->pid.d[k]?u->l:u->r,(k+1)%kd,x,dep-1)){
+			cmp.sort_id=k;
+			if(insert(cmp(x,u->pid)?u->l:u->r,(k+1)%kd,x,dep-1)){
 				if(!isbad(u))return 1;
-				node **ptr=&A[0];
-				flatten(u,ptr);
-				u=build(k,0,u->s-1);
+				rebuild(u,k);
 			}
 			return 0;
 		}
-		inline int heuristic(const int h[])const{
-			int ret=0;
-			for(int i=0;i<kd;++i)ret+=h[i];
+		node *findmin(node*o,int k){
+			if(!o)return 0; 
+			if(cmp.sort_id==k)return o->l?findmin(o->l,(k+1)%kd):o;
+			node *l=findmin(o->l,(k+1)%kd);
+			node *r=findmin(o->r,(k+1)%kd);
+			if(l&&!r)return cmp(l->pid,o->pid)?l:o;
+			if(!l&&r)return cmp(r->pid,o->pid)?r:o;
+			if(!l&&!r)return o;
+			if(cmp(l->pid,r->pid))return cmp(l->pid,o->pid)?l:o;
+			return cmp(r->pid,o->pid)?r:o;
+		}
+		bool erase(node *&u,int k,const point &x){
+			if(!u)return 0;
+			if(u->pid==x){
+				if(u->r);
+				else if(u->l){
+					u->r=u->l;
+					u->l=0;
+				}else{
+					delete u;
+					u=0;
+					return 1;
+				}
+				--u->s;
+				cmp.sort_id=k;
+				u->pid=findmin(u->r,(k+1)%kd)->pid;
+				return erase(u->r,(k+1)%kd,u->pid);
+			}
+			cmp.sort_id=k;
+			if(erase(cmp(x,u->pid)?u->l:u->r,(k+1)%kd,x)){
+				--u->s;return 1;
+			}else return 0;
+		}
+		inline T heuristic(const T h[])const{
+			T ret=0;
+			for(size_t i=0;i<kd;++i)ret+=h[i];
 			return ret;
 		}
+		int qM;
+		std::priority_queue<std::pair<T,point > >pQ;
 		void nearest(node *u,int k,const point &x,T *h,T &mndist){
 			if(u==0||heuristic(h)>=mndist)return;
-			point now=u->pid;
-			int dist=u->pid.dist(x),old=h[k];
+			T dist=u->pid.dist(x),old=h[k];
 			/*mndist=std::min(mndist,dist);*/
 			if(dist<mndist){
 				pQ.push(std::make_pair(dist,u->pid));
@@ -597,18 +515,30 @@ class kd_tree{
 				}
 			if(is)in_range.push_back(u->pid);
 			if(mi.d[k]<=u->pid.d[k])range(u->l,(k+1)%kd,mi,ma);
-			if(mi.d[k]>=u->pid.d[k])range(u->r,(k+1)%kd,mi,ma);
+			if(ma.d[k]>=u->pid.d[k])range(u->r,(k+1)%kd,mi,ma);
 		}
 	public:
+		kd_tree(const T &INF,double a=0.75):alpha(a),loga(log2(1.0/a)),INF(INF),maxn(1){}
 		inline void clear(){
-			clear(root),root=0;
+			clear(root),root=0,maxn=1;
 		}
 		inline void build(int n,const point *p){
+			clear(root),A.resize(maxn=n);
 			for(int i=0;i<n;++i)A[i]=new node(p[i]);
 			root=build(0,0,n-1);
 		}
 		inline void insert(const point &x){
 			insert(root,0,x,std::__lg(size(root))/loga);
+			if(root->s>maxn)maxn=root->s;
+		}
+		inline bool erase(const point &p){
+			bool d=erase(root,0,p);
+			if(root&&root->s<alpha*maxn)rebuild();
+			return d;
+		}
+		inline void rebuild(){
+			if(root)rebuild(root,0);
+			maxn=root->s;
 		}
 		inline T nearest(const point &x,int k){
 			qM=k;
@@ -616,19 +546,119 @@ class kd_tree{
 			nearest(root,0,x,h,mndist);
 			mndist=pQ.top().first;
 			pQ=std::priority_queue<std::pair<T,point > >();
-			return mndist;/*å›å‚³é›¢xç¬¬kè¿‘çš„é»çš„è·é›¢*/ 
+			return mndist;/*¦^¶ÇÂ÷x²ÄkªñªºÂIªº¶ZÂ÷*/ 
 		}
 		inline const std::vector<point> &range(const point&mi,const point&ma){
 			in_range.clear();
 			range(root,0,mi,ma);
-			return in_range;/*å›å‚³ä»‹æ–¼miåˆ°maä¹‹é–“çš„é»vector*/ 
+			return in_range;/*¦^¶Ç¤¶©ómi¨ìma¤§¶¡ªºÂIvector*/ 
 		}
+		inline int size(){return root?root->s:0;}
 };
-#undef T
-#undef kd
-#undef MAXN
-#undef INF
 #endif
+
+```
+
+Code:.\Data Structure\kd_tree_replace_segment_tree.cpp
+================
+
+```cpp
+/*kd¾ğ¥N´À°ªºû½u¬q¾ğ*/
+struct node{
+	node *l,*r;
+	point pid,mi,ma;
+	int s;
+	int data;
+	node(const point &p,int d):l(0),r(0),pid(p),mi(p),ma(p),s(1),data(d),dmin(d),dmax(d){}
+	inline void up(){
+		mi=ma=pid;
+		s=1;
+		if(l){
+			for(int i=0;i<kd;++i){
+				mi.d[i]=min(mi.d[i],l->mi.d[i]);
+				ma.d[i]=max(ma.d[i],l->ma.d[i]);
+			}
+			s+=l->s;
+		}
+		if(r){
+			for(int i=0;i<kd;++i){
+				mi.d[i]=min(mi.d[i],r->mi.d[i]);
+				ma.d[i]=max(ma.d[i],r->ma.d[i]);
+			}
+			s+=r->s;
+		}
+	}
+	inline void up2(){
+		//¨ä¥LÃi´k¼Ğ°O¦V¤W§ó·s 
+	}
+	inline void down(){
+		//¨ä¥LÃi´k¼Ğ°O¤U±À 
+	}
+}*root;
+
+/*ÀË¬d°Ï¶¡¥]§t¥Îªº¨ç¼Æ*/
+inline bool range_include(node *o,const point &L,const point &R){
+	for(int i=0;i<kd;++i){ 
+		if(L.d[i]>o->ma.d[i]||R.d[i]<o->mi.d[i])return 0;
+	}//¥u­n(L,R)°Ï¶¡¦³©Moªº°Ï¶¡¦³¥æ¶°´N¦^¶Çtrue
+	return 1;
+}
+inline bool range_in_range(node *o,const point &L,const point &R){
+	for(int i=0;i<kd;++i){
+		if(L.d[i]>o->mi.d[i]||o->ma.d[i]>R.d[i])return 0;
+	}//¦pªG(L,R)°Ï¶¡§¹¥ş¥]§toªº°Ï¶¡´N¦^¶Çtrue
+	return 1;
+}
+inline bool point_in_range(node *o,const point &L,const point &R){
+	for(int i=0;i<kd;++i){
+		if(L.d[i]>o->pid.d[i]||R.d[i]<o->pid.d[i])return 0;
+	}//¦pªG(L,R)°Ï¶¡§¹¥ş¥]§to->pid³o­ÓÂI´N¦^¶Çtrue
+	return 1;
+}
+
+/*³æÂI­×§ï¡A¥H³æÂI§ï­È¬°¨Ò*/
+void update(node *u,const point &x,int data,int k=0){
+	if(!u)return;
+	u->down();
+	if(u->pid==x){
+		u->data=data;
+		u->up2();
+		return;
+	}
+	cmp.sort_id=k;
+	update(cmp(x,u->pid)?u->l:u->r,x,data,(k+1)%kd);
+	u->up2();
+}
+
+/*°Ï¶¡­×§ï*/ 
+void update(node *o,const point &L,const point &R,int data){
+	if(!o)return;
+	o->down();
+	if(range_in_range(o,L,R)){
+		//°Ï¶¡Ãi´k¼Ğ°O­×§ï 
+		o->down();
+		return;
+	}
+	if(point_in_range(o,L,R)){
+		//³o­ÓÂI¦b(L,R)°Ï¶¡¡A¦ı¬O¥Lªº¥ª¥k¤l¾ğ¤£¤@©w¦b°Ï¶¡¤¤
+		//³æÂIÃi´k¼Ğ°O­×§ï 
+	}
+	if(o->l&&range_include(o->l,L,R))update(o->l,L,R,data);
+	if(o->r&&range_include(o->r,L,R))update(o->r,L,R,data);
+	o->up2();
+}
+
+/*°Ï¶¡¬d¸ß¡A¥HÁ`©M¬°¨Ò*/ 
+int query(node *o,const point &L,const point &R){
+	if(!o)return 0;
+	o->down();
+	if(range_in_range(o,L,R))return o->sum;
+	int ans=0;
+	if(point_in_range(o,L,R))ans+=o->data;
+	if(o->l&&range_include(o->l,L,R))ans+=query(o->l,L,R);
+	if(o->r&&range_include(o->r,L,R))ans+=query(o->r,L,R);
+	return ans;
+}
 
 ```
 
@@ -858,93 +888,212 @@ Code:.\Flow\dinic.cpp
 ================
 
 ```cpp
-#include<string.h>
-#include<queue>
-#include<algorithm>
-#define MAXN 100+5
-int n,m;/*é»æ•¸ã€é‚Šæ•¸*/
-/*å®¹é‡ä¸Šé™ã€æµé‡ã€å‰©é¤˜å®¹é‡*/ 
-int g[MAXN][MAXN],f[MAXN][MAXN],r[MAXN][MAXN];
-int level[MAXN];/*å±¤æ¬¡*/ 
-int bfs(int s,int t){
-	memset(level,0,sizeof(level));
-	std::queue<int>q;
+#define MAXN 105
+#define INF INT_MAX
+int n;/*ÂI¼Æ*/
+int level[MAXN],cur[MAXN];/*¼h¦¸¡B·í«e©·Àu¤Æ*/
+struct edge{
+	int v,pre;
+	long long cap,flow,r;
+	edge(int v,int pre,long long cap):v(v),pre(pre),cap(cap),flow(0),r(cap){}
+};
+int g[MAXN];
+std::vector<edge> e;
+inline void init(){
+	memset(g,-1,sizeof(int)*(n+1));
+	e.clear();
+}
+inline void add_edge(int u,int v,long long cap,bool directed=false){
+	e.push_back(edge(v,g[u],cap));
+	g[u]=e.size()-1;
+	e.push_back(edge(u,g[v],directed?0:cap));
+	g[v]=e.size()-1;
+}
+inline int bfs(int s,int t){
+	memset(level,0,sizeof(int)*(n+1));
+	memcpy(cur,g,sizeof(int)*(n+1));
+	std::queue<int >q;
 	q.push(s);
 	level[s]=1;
-	while(!q.empty()){
-		int x=q.front();q.pop();
-		for(int i=1;i<=n;++i){
-			if(!level[i]&&r[x][i]){
-				level[i]=level[x]+1;
-				q.push(i);
+	while(q.size()){
+		int u=q.front();q.pop();
+		for(int i=g[u];~i;i=e[i].pre){
+			if(!level[e[i].v]&&e[i].r){
+				level[e[i].v]=level[u]+1;
+				q.push(e[i].v);
+				if(e[i].v==t)return 1;
 			}
 		}
 	}
-	return level[t]!=0;
+	return 0;
 }
-int dfs(int x,int flow,int t){
-	if(x==t)return flow;
-	int rf=flow,tmp;
-	for(int i=1;i<=n&&rf;++i){
-		if(level[i]==level[x]+1&&r[x][i]){
-			tmp=dfs(i,std::min(rf,r[x][i]),t);
-			f[x][i]+=tmp;
-			f[i][x]-=tmp;
-			r[x][i]=g[x][i]-f[x][i];
-			r[i][x]=g[i][x]-f[i][x];
-			if(!(rf-=tmp))return flow;
+long long dfs(int u,int t,long long cur_flow=INF){
+	if(u==t||!cur_flow)return cur_flow;
+	long long df,tf=0;
+	for(int &i=cur[u];~i;i=e[i].pre){
+		if(level[e[i].v]==level[u]+1&&e[i].r){
+			if(df=dfs(e[i].v,t,std::min(cur_flow,e[i].r))){
+				e[i].flow+=df;
+				e[i^1].flow-=df;
+				e[i].r-=df;
+				e[i^1].r+=df;
+				tf+=df;
+				if(!(cur_flow-=df))break;
+			}
 		}
 	}
-	return flow-rf;
+	if(!df)level[u]=0;
+	return tf;
 }
-int dinic(int s,int t){
-	memset(f,0,sizeof(f));
-	memcpy(r,g,sizeof(g));
-	int ret=0,f=0;
-	while(bfs(s,t)){
-		while((f=dfs(s,INT_MAX,t)))ret+=f;
+inline long long dinic(int s,int t,bool clean=true){
+	if(clean){
+		for(size_t i=0;i<e.size();++i){
+			e[i].flow=0;
+			e[i].r=e[i].cap;
+		}
 	}
-	return ret;
+	long long ans=0;
+	while(bfs(s,t))ans+=dfs(s,t);
+	return ans;
 }
 
 ```
 
-Code:.\Flow\SAP.cpp
+Code:.\Flow\ISAP.cpp
 ================
 
 ```cpp
-#include<string.h>
-#include<algorithm>
-#define MAXN 100+5
-int n,m;/*é»æ•¸ã€é‚Šæ•¸*/
-/*å®¹é‡ä¸Šé™ã€æµé‡ã€å‰©é¤˜å®¹é‡*/ 
-int g[MAXN][MAXN],f[MAXN][MAXN],r[MAXN][MAXN];
-/*å±¤æ¬¡ã€gap[i]=å±¤æ¬¡ç‚ºiçš„é»ä¹‹å€‹æ•¸*/ 
-int d[MAXN],gap[MAXN];
-int dfs(int x,int flow,int s,int t){
-	if(x==t)return flow;
-	int rf=flow,tmp;
-	for(int i=1;i<=n;++i){
-		if(r[x][i]&&d[x]==d[i]+1){
-			tmp=dfs(i,std::min(rf,r[x][i]),s,t);
-			f[x][i]+=tmp;
-			f[i][x]-=tmp;
-			r[x][i]=g[x][i]-f[x][i];
-			r[i][x]=g[i][x]-f[i][x];
-			if(!(rf-=tmp))return flow;
+#define MAXN 105
+#define INF INT_MAX
+int n;/*ÂI¼Æ*/
+int d[MAXN],gap[MAXN],cur[MAXN];
+/*¼h¦¸¡Bgap[i]=¼h¦¸¬°iªºÂI¤§­Ó¼Æ¡B·í«e©·Àu¤Æ*/ 
+struct edge{
+	int v,pre;
+	long long cap,flow,r;
+	edge(int v,int pre,long long cap):v(v),pre(pre),cap(cap),flow(0),r(cap){}
+};
+int g[MAXN];
+std::vector<edge> e;
+inline void init(){
+	memset(g,-1,sizeof(int)*(n+1));
+	e.clear();
+}
+inline void add_edge(int u,int v,long long cap,bool directed=false){
+	e.push_back(edge(v,g[u],cap));
+	g[u]=e.size()-1;
+	e.push_back(edge(u,g[v],directed?0:cap));
+	g[v]=e.size()-1;
+}
+long long dfs(int u,int s,int t,long long cur_flow=INF){
+	if(u==t)return cur_flow;
+	long long tf=cur_flow,df;
+	for(int &i=cur[u];~i;i=e[i].pre){
+		if(e[i].r&&d[u]==d[e[i].v]+1){
+			df=dfs(e[i].v,s,t,std::min(tf,e[i].r));
+			e[i].flow+=df;
+			e[i^1].flow-=df;
+			e[i].r-=df;
+			e[i^1].r+=df;
+			if(!(tf-=df)||d[s]==n)return cur_flow-tf;
 		}
 	}
-	if(!--gap[d[x]])d[s]=n;
-	++gap[++d[x]];
-	return flow-rf;
+	int minh=n;
+	for(int i=cur[u]=g[u];~i;i=e[i].pre){
+		if(e[i].r&&d[e[i].v]<minh)minh=d[e[i].v];
+	}
+	if(!--gap[d[u]])d[s]=n;
+	else ++gap[d[u]=++minh];
+	return cur_flow-tf;
 }
-int sap(int s,int t){
-	memset(f,0,sizeof(f));
-	memset(d,0,sizeof(d));
-	memset(gap,0,sizeof(gap));
-	memcpy(r,g,sizeof(g));
-	int ans=0;
-	for(gap[0]=n;d[s]<n;)ans+=dfs(s,INT_MAX,s,t);
+inline long long isap(int s,int t,bool clean=true){
+	memset(d,0,sizeof(int)*(n+1));
+	memset(gap,0,sizeof(int)*(n+1));
+	memcpy(cur,g,sizeof(int)*(n+1));
+	if(clean){
+		for(size_t i=0;i<e.size();++i){
+			e[i].flow=0;
+			e[i].r=e[i].cap;
+		}
+	}
+	long long max_flow=0;
+	for(gap[0]=n;d[s]<n;)max_flow+=dfs(s,s,t);
+	return max_flow;
+}
+
+```
+
+Code:.\Flow\MinCostMaxFlow.cpp
+================
+
+```cpp
+#define MAXN 440
+#define INF 999999999
+struct edge{
+	int v,pre;
+	int cap,cost;
+	edge(int v,int pre,int cap,int cost):v(v),pre(pre),cap(cap),cost(cost){}
+};
+int n,S,T;
+int dis[MAXN],piS,ans;
+bool vis[MAXN];
+std::vector<edge> e;
+int g[MAXN];
+inline void init(){
+	memset(g,-1,sizeof(int)*n);
+	e.clear();
+}
+inline void add_edge(int u,int v,int cost,int cap,bool directed=false){
+	e.push_back(edge(v,g[u],cap,cost));
+	g[u]=e.size()-1;
+	e.push_back(edge(u,g[v],directed?0:cap,-cost));
+	g[v]=e.size()-1;
+}
+int augment(int u,int cur_flow){
+	if(u==T||!cur_flow)return ans+=piS*cur_flow,cur_flow;
+	vis[u]=1;
+	int r=cur_flow,d;
+	for(int i=g[u];~i;i=e[i].pre){
+		if(e[i].cap&&!e[i].cost&&!vis[e[i].v]){
+			d=augment(e[i].v,std::min(r,e[i].cap));
+			e[i].cap-=d;
+			e[i^1].cap+=d;
+			if(!(r-=d))break;
+		}
+	}
+	return cur_flow-r;
+}
+inline bool modlabel(){
+	for(int i=0;i<n;++i)dis[i]=INF;
+	dis[T]=0;
+	static std::deque<int>q;
+	q.push_back(T);
+	while(q.size()){
+		int u=q.front();
+		q.pop_front();
+		int dt;
+		for(int i=g[u];~i;i=e[i].pre){
+			if(e[i^1].cap&&(dt=dis[u]-e[i].cost)<dis[e[i].v]){
+				if((dis[e[i].v]=dt)<=dis[q.size()?q.front():S]){
+					q.push_front(e[i].v);
+				}else q.push_back(e[i].v);
+			}
+		}
+	}
+	for(int u=0;u<n;++u){
+		for(int i=g[u];~i;i=e[i].pre){
+			e[i].cost+=dis[e[i].v]-dis[u];
+		}
+	}
+	piS+=dis[S];
+	return dis[S]<INF;
+}
+inline int mincost(){
+	piS=ans=0;
+	while(modlabel()){
+		do memset(vis,0,sizeof(bool)*n);
+		while(augment(S,INF));
+	}
 	return ans;
 }
 
@@ -1146,298 +1295,220 @@ Code:.\Graph\ä¸€èˆ¬åœ–æœ€å¤§æ¬ŠåŒ¹é….cpp
 ================
 
 ```cpp
-#include<cstdio>
-#include<algorithm>
-#include<vector>
+#include<bits/stdc++.h>
 using namespace std;
-
-const int INF = 2147483647;
-const int MaxN = 400;
-const int MaxM = 79800;
-const int MaxNX = MaxN + MaxN;
-
+#define INF INT_MAX
+#define MAXN 400
 struct edge{
-	int v,u,w;
+	int u,v,w;
 	edge(){}
-	edge(const int _v, const int _u, const int _w):v(_v),u(_u),w(_w){}
+	edge(int u,int v,int w):u(u),v(v),w(w){}
 };
-
-int n,m;
-edge mat[MaxNX + 1][MaxNX + 1];
-
-int n_matches;
-long long tot_weight;
-int mate[MaxNX + 1];
-int lab[MaxNX + 1];
-
-int q_n, q[MaxN];
-int fa[MaxNX + 1], col[MaxNX + 1];
-int slackv[MaxNX + 1];
-
-int n_x;
-int bel[MaxNX + 1], blofrom[MaxNX + 1][MaxN + 1];
-vector<int> bloch[MaxNX + 1];
-
+int n,n_x;
+edge g[MAXN*2+1][MAXN*2+1];
+int lab[MAXN*2+1];
+int match[MAXN*2+1],slack[MAXN*2+1],st[MAXN*2+1],pa[MAXN*2+1];
+int flower_from[MAXN*2+1][MAXN+1],S[MAXN*2+1],vis[MAXN*2+1];
+vector<int> flower[MAXN*2+1];
+queue<int> q;
 inline int e_delta(const edge &e){ // does not work inside blossoms
-	return lab[e.v] + lab[e.u] - mat[e.v][e.u].w * 2;
+	return lab[e.u]+lab[e.v]-g[e.u][e.v].w*2;
 }
-inline void update_slackv(int v, int x){
-	if (!slackv[x] || e_delta(mat[v][x]) < e_delta(mat[slackv[x]][x]))
-		slackv[x] = v;
+inline void update_slack(int u,int x){
+	if(!slack[x]||e_delta(g[u][x])<e_delta(g[slack[x]][x]))slack[x]=u;
 }
-inline void calc_slackv(int x){
-	slackv[x] = 0;
-	for (int v = 1; v <= n; v++)
-		if (mat[v][x].w > 0 && bel[v] != x && col[bel[v]] == 0)
-			update_slackv(v, x);
+inline void set_slack(int x){
+	slack[x]=0;
+	for(int u=1;u<=n;++u)
+		if(g[u][x].w>0&&st[u]!=x&&S[st[u]]==0)update_slack(u,x);
 }
-
-inline void q_push(int x){
-	if (x <= n)q[q_n++] = x;
-	else{
-		for (size_t i = 0; i < bloch[x].size(); i++)
-			q_push(bloch[x][i]);
+void q_push(int x){
+	if(x<=n)q.push(x);
+	else for(size_t i=0;i<flower[x].size();i++)q_push(flower[x][i]);
+}
+inline void set_st(int x,int b){
+	st[x]=b;
+	if(x>n)for(size_t i=0;i<flower[x].size();++i)
+			set_st(flower[x][i],b);
+}
+inline int get_pr(int b,int xr){
+	int pr=find(flower[b].begin(),flower[b].end(),xr)-flower[b].begin();
+	if(pr%2==1){//æª¢æŸ¥ä»–åœ¨å‰ä¸€å±¤åœ–æ˜¯å¥‡é»é‚„æ˜¯å¶é»
+		reverse(flower[b].begin()+1,flower[b].end());
+		return (int)flower[b].size()-pr;
+	}else return pr;
+}
+inline void set_match(int u,int v){
+	match[u]=g[u][v].v;
+	if(u>n){
+		edge e=g[u][v];
+		int xr=flower_from[u][e.u],pr=get_pr(u,xr);
+		for(int i=0;i<pr;++i)set_match(flower[u][i],flower[u][i^1]);
+		set_match(xr,v);
+		rotate(flower[u].begin(),flower[u].begin()+pr,flower[u].end());
 	}
 }
-inline void set_mate(int xv, int xu){
-	mate[xv] = mat[xv][xu].u;
-	if (xv > n){
-		edge e = mat[xv][xu];
-		int xr = blofrom[xv][e.v];
-		int pr = find(bloch[xv].begin(), bloch[xv].end(), xr) - bloch[xv].begin();
-		if (pr % 2 == 1){
-			reverse(bloch[xv].begin() + 1, bloch[xv].end());
-			pr = (int)bloch[xv].size() - pr;
-		}
-
-		for (int i = 0; i < pr; i++)
-			set_mate(bloch[xv][i], bloch[xv][i^1]);
-		set_mate(xr, xu);
-
-		rotate(bloch[xv].begin(), bloch[xv].begin() + pr, bloch[xv].end());
-	}
-}
-inline void set_bel(int x, int b){
-	bel[x] = b;
-	if (x > n){
-		for (size_t i = 0; i < bloch[x].size(); i++)
-			set_bel(bloch[x][i], b);
-	}
-}
-inline void augment(int xv, int xu){
+inline void augment(int u,int v){
 	for(;;){
-		int xnu = bel[mate[xv]];
-		set_mate(xv, xu);
-		if (!xnu)return;
-		set_mate(xnu, bel[fa[xnu]]);
-		xv = bel[fa[xnu]], xu = xnu;
+		int xnv=st[match[u]];
+		set_match(u,v);
+		if(!xnv)return;
+		set_match(xnv,st[pa[xnv]]);
+		u=st[pa[xnv]],v=xnv;
 	}
 }
-inline int get_lca(int xv, int xu){
-	static bool book[MaxNX + 1];
-	for (int x = 1; x <= n_x; x++)book[x]=false;
-	while(xv||xu){
-		if(xv){
-			if(book[xv])return xv;
-			book[xv] = true;
-			xv = bel[mate[xv]];
-			if(xv)xv = bel[fa[xv]];
-		}
-		swap(xv, xu);
+inline int get_lca(int u,int v){
+	static int t=0;
+	for(++t;u||v;swap(u,v)){
+		if(u==0)continue;
+		if(vis[u]==t)return u;
+		vis[u]=t;//é€™ç¨®æ–¹æ³•å¯ä»¥ä¸ç”¨æ¸…ç©ºvé™£åˆ— 
+		u=st[match[u]];
+		if(u)u=st[pa[u]];
 	}
 	return 0;
 }
-inline void add_blossom(int xv, int xa, int xu){
+inline void add_blossom(int u,int lca,int v){
 	int b=n+1;
-	while(b <= n_x && bel[b])b++;
-	if(b > n_x)n_x++;
-
-	lab[b] = 0;
-	col[b] = 0;
-
-	mate[b] = mate[xa];
-
-	bloch[b].clear();
-	bloch[b].push_back(xa);
-	for (int x = xv; x != xa; x = bel[fa[bel[mate[x]]]])
-		bloch[b].push_back(x), bloch[b].push_back(bel[mate[x]]), q_push(bel[mate[x]]);
-	reverse(bloch[b].begin() + 1, bloch[b].end());
-	for (int x = xu; x != xa; x = bel[fa[bel[mate[x]]]])
-		bloch[b].push_back(x), bloch[b].push_back(bel[mate[x]]), q_push(bel[mate[x]]);
-
-	set_bel(b, b);
-
-	for (int x = 1; x <= n_x; x++){
-		mat[b][x].w = mat[x][b].w = 0;
-		blofrom[b][x] = 0;
+	while(b<=n_x&&st[b])++b;
+	if(b>n_x)++n_x;
+	lab[b]=0,S[b]=0;
+	match[b]=match[lca];
+	flower[b].clear();
+	flower[b].push_back(lca);
+	for(int x=u,y;x!=lca;x=st[pa[y]])
+		flower[b].push_back(x),flower[b].push_back(y=st[match[x]]),q_push(y);
+	reverse(flower[b].begin()+1,flower[b].end());
+	for(int x=v,y;x!=lca;x=st[pa[y]])
+		flower[b].push_back(x),flower[b].push_back(y=st[match[x]]),q_push(y);
+	set_st(b,b);
+	for(int x=1;x<=n_x;++x)g[b][x].w=g[x][b].w=0;
+	for(int x=1;x<=n;++x)flower_from[b][x]=0;
+	for(size_t i=0;i<flower[b].size();++i){
+		int xs=flower[b][i];
+		for(int x=1;x<=n_x;++x)
+			if(g[b][x].w==0||e_delta(g[xs][x])<e_delta(g[b][x]))
+				g[b][x]=g[xs][x],g[x][b]=g[x][xs];
+		for(int x=1;x<=n;++x)
+			if(flower_from[xs][x])flower_from[b][x]=xs;
 	}
-	for (size_t i = 0; i < bloch[b].size(); i++){
-		int xs = bloch[b][i];
-		for (int x = 1; x <= n_x; x++)
-			if (mat[b][x].w == 0 || e_delta(mat[xs][x]) < e_delta(mat[b][x]))
-				mat[b][x] = mat[xs][x], mat[x][b] = mat[x][xs];
-		for (int x = 1; x <= n_x; x++)
-			if (blofrom[xs][x])
-				blofrom[b][x] = xs;
-	}
-	calc_slackv(b);
+	set_slack(b);
 }
-inline void expand_blossom1(int b){ // lab[b] == 1
-	for (size_t i = 0; i < bloch[b].size(); i++)
-		set_bel(bloch[b][i], bloch[b][i]);
-
-	int xr = blofrom[b][mat[b][fa[b]].v];
-	int pr = find(bloch[b].begin(), bloch[b].end(), xr) - bloch[b].begin();
-	if (pr % 2 == 1){
-		reverse(bloch[b].begin() + 1, bloch[b].end());
-		pr = (int)bloch[b].size() - pr;
-	}
-
-	for (int i = 0; i < pr; i += 2){
-		int xs = bloch[b][i], xns = bloch[b][i + 1];
-		fa[xs] = mat[xns][xs].v;
-		col[xs] = 1, col[xns] = 0;
-		slackv[xs] = 0, calc_slackv(xns);
+inline void expand_blossom(int b){ // S[b] == 1
+	for(size_t i=0;i<flower[b].size();++i)
+		set_st(flower[b][i],flower[b][i]);
+	int xr=flower_from[b][g[b][pa[b]].u],pr=get_pr(b,xr);
+	for(int i=0;i<pr;i+=2){
+		int xs=flower[b][i],xns=flower[b][i+1];
+		pa[xs]=g[xns][xs].u;
+		S[xs]=1,S[xns]=0;
+		slack[xs]=0,set_slack(xns);
 		q_push(xns);
 	}
-	col[xr] = 1;
-	fa[xr] = fa[b];
-	for (size_t i = pr + 1; i < bloch[b].size(); i++){
-		int xs = bloch[b][i];
-		col[xs] = -1;
-		calc_slackv(xs);
+	S[xr]=1,pa[xr]=pa[b];
+	for(size_t i=pr+1;i<flower[b].size();++i){
+		int xs=flower[b][i];
+		S[xs]=-1,set_slack(xs);
 	}
-
-	bel[b] = 0;
-}
-inline void expand_blossom_final(int b){ // at the final stage
-	for (size_t i = 0; i < bloch[b].size(); i++){
-		if (bloch[b][i] > n && lab[bloch[b][i]] == 0)
-			expand_blossom_final(bloch[b][i]);
-		else
-			set_bel(bloch[b][i], bloch[b][i]);
-	}
-	bel[b] = 0;
+	st[b]=0;
 }
 inline bool on_found_edge(const edge &e){
-	int xv = bel[e.v], xu = bel[e.u];
-	if (col[xu] == -1){
-		int nv = bel[mate[xu]];
-		fa[xu] = e.v;
-		col[xu] = 1, col[nv] = 0;
-		slackv[xu] = slackv[nv] = 0;
-		q_push(nv);
-	}else if (col[xu] == 0){
-		int xa = get_lca(xv, xu);
-		if (!xa){
-			augment(xv, xu), augment(xu, xv);
-			for (int b = n + 1; b <= n_x; b++)
-				if (bel[b] == b && lab[b] == 0)
-					expand_blossom_final(b);
+	int u=st[e.u],v=st[e.v];
+	if(S[v]==-1){
+		pa[v]=e.u,S[v]=1;
+		int nu=st[match[v]];
+		slack[v]=slack[nu]=0;
+		S[nu]=0,q_push(nu);
+	}else if(S[v]==0){
+		int lca=get_lca(u,v);
+		if(!lca){
+			augment(u,v),augment(v,u);
 			return true;
-		}else add_blossom(xv, xa, xu);
+		}else add_blossom(u,lca,v);
 	}
 	return false;
 }
-bool match(){
-	for (int x = 1; x <= n_x; x++)col[x]=-1,slackv[x]=0;
-	q_n = 0;
-	
-	for(int x = 1; x <= n_x; x++)
-		if (bel[x] == x && !mate[x])
-			fa[x] = 0, col[x] = 0, slackv[x] = 0, q_push(x);
-	if(q_n == 0)return false;
-
+inline bool matching(){
+	memset(S+1,-1,sizeof(int)*n_x);
+	memset(slack+1,0,sizeof(int)*n_x);
+	q=queue<int>();
+	for(int x=1;x<=n_x;++x)
+		if(st[x]==x&&!match[x])pa[x]=0,S[x]=0,q_push(x);
+	if(q.empty())return false;
 	for(;;){
-		for (int i = 0; i < q_n; i++){
-			int v = q[i];
-			for (int u = 1; u <= n; u++)
-				if (mat[v][u].w > 0 && bel[v] != bel[u]){
-					int d = e_delta(mat[v][u]);
-					if (d == 0){
-						if (on_found_edge(mat[v][u]))return true;
-					}else if (col[bel[u]] == -1 || col[bel[u]] == 0)
-						update_slackv(v, bel[u]);
+		while(q.size()){
+			int u=q.front();q.pop();
+			if(S[st[u]]==1)continue;
+			for(int v=1;v<=n;++v)
+				if(g[u][v].w>0&&st[u]!=st[v]){
+					if(e_delta(g[u][v])==0){
+						if(on_found_edge(g[u][v]))return true;
+					}else update_slack(u,st[v]);
 				}
 		}
-
-		int d = INF;
-		for (int v = 1; v <= n; v++)
-			if (col[bel[v]] == 0)
-				d=min(d, lab[v]);
-		for (int b = n + 1; b <= n_x; b++)
-			if (bel[b] == b && col[b] == 1)
-				d=min(d, lab[b] / 2);
-		for (int x = 1; x <= n_x; x++)
-			if (bel[x] == x && slackv[x]){
-				if (col[x] == -1)
-					d=min(d, e_delta(mat[slackv[x]][x]));
-				else if (col[x] == 0)
-					d=min(d, e_delta(mat[slackv[x]][x]) / 2);
+		int d=INF;
+		for(int b=n+1;b<=n_x;++b)
+			if(st[b]==b&&S[b]==1)d=min(d,lab[b]/2);
+		for(int x=1;x<=n_x;++x)
+			if(st[x]==x&&slack[x]){
+				if(S[x]==-1)d=min(d,e_delta(g[slack[x]][x]));
+				else if(S[x]==0)d=min(d,e_delta(g[slack[x]][x])/2);
 			}
-
-		for (int v = 1; v <= n; v++){
-			if (col[bel[v]] == 0)lab[v] -= d;
-			else if (col[bel[v]] == 1)lab[v] += d;
+		for(int u=1;u<=n;++u){
+			if(S[st[u]]==0){
+				if(lab[u]<=d)return 0;
+				lab[u]-=d;
+			}else if(S[st[u]]==1)lab[u]+=d;
 		}
-		for (int b = n + 1; b <= n_x; b++)
-			if (bel[b] == b){
-				if (col[bel[b]] == 0)lab[b] += d * 2;
-				else if (col[bel[b]] == 1)lab[b] -= d * 2;
+		for(int b=n+1;b<=n_x;++b)
+			if(st[b]==b){
+				if(S[st[b]]==0)lab[b]+=d*2;
+				else if(S[st[b]]==1)lab[b]-=d*2;
 			}
-
-		q_n = 0;
-		for (int v = 1; v <= n; v++)
-			if(lab[v]==0)return false; // all unmatched vertices' labels are zero! cheers!
-		for (int x = 1; x <= n_x; x++)
-			if(bel[x]==x&&slackv[x]&&bel[slackv[x]]!=x&&e_delta(mat[slackv[x]][x])==0){
-				if (on_found_edge(mat[slackv[x]][x]))return true;
-			}
-		for (int b = n + 1; b <= n_x; b++)
-			if (bel[b] == b && col[b] == 1 && lab[b] == 0)
-				expand_blossom1(b);
+		q=queue<int>();
+		for(int x=1;x<=n_x;++x)
+			if(st[x]==x&&slack[x]&&st[slack[x]]!=x&&e_delta(g[slack[x]][x])==0)
+				if(on_found_edge(g[slack[x]][x]))return true;
+		for(int b=n+1;b<=n_x;++b)
+			if(st[b]==b&&S[b]==1&&lab[b]==0)expand_blossom(b);
 	}
 	return false;
 }
-void calc_max_weight_match(){
-	for (int v = 1; v <= n; v++)mate[v] = 0;
-
-	n_x = n;
-	n_matches = 0;
-	tot_weight = 0;
-
-	bel[0]=0;
-	for(int v = 1; v <= n; v++)
-		bel[v] = v, bloch[v].clear();
-	for (int v = 1; v <= n; v++)
-		for (int u = 1; u <= n; u++)
-			blofrom[v][u] = v == u ? v : 0;
-
-	int w_max = 0;
-	for (int v = 1; v <= n; v++)
-		for (int u = 1; u <= n; u++)
-			w_max=max(w_max, mat[v][u].w);
-	for (int v = 1; v <= n; v++)lab[v] = w_max;
-
-	while (match())n_matches++;
-
-	for (int v = 1; v <= n; v++)
-		if (mate[v] && mate[v] < v)
-			tot_weight += mat[v][mate[v]].w;
+inline pair<long long,int> weight_blossom(){
+	memset(match+1,0,sizeof(int)*n);
+	n_x=n;
+	int n_matches=0;
+	long long tot_weight=0;
+	for(int u=0;u<=n;++u)st[u]=u,flower[u].clear();
+	int w_max=0;
+	for(int u=1;u<=n;++u)
+		for(int v=1;v<=n;++v){
+			flower_from[u][v]=(u==v?u:0);
+			w_max=max(w_max,g[u][v].w);
+		}
+	for(int u=1;u<=n;++u)lab[u]=w_max;
+	while(matching())++n_matches;
+	for(int u=1;u<=n;++u)
+		if(match[u]&&match[u]<u)
+			tot_weight+=g[u][match[u]].w;
+	return make_pair(tot_weight,n_matches);
+}
+inline void init_weight_graph(){
+	for(int u=1;u<=n;++u)
+		for(int v=1;v<=n;++v)
+			g[u][v]=edge(u,v,0);
 }
 int main(){
+	int m;
 	scanf("%d%d",&n,&m);
-	for (int v = 1; v <= n; v++)
-		for (int u = 1; u <= n; u++)
-			mat[v][u] = edge(v, u, 0);
-	for (int i = 0; i < m; i++){
-		int v,u,w;
-		scanf("%d%d%d",&v,&u,&w);
-		mat[v][u].w = mat[u][v].w = w;
+	init_weight_graph();
+	for(int i=0;i<m;++i){
+		int u,v,w;
+		scanf("%d%d%d",&u,&v,&w);
+		g[u][v].w=g[v][u].w=w;
 	}
-	calc_max_weight_match();
-	printf("%lld\n", tot_weight);
-	for (int v = 1; v <= n; v++)printf("%d ", mate[v]);puts("");
+	printf("%lld\n",weight_blossom().first);
+	for(int u=1;u<=n;++u)printf("%d ",match[u]);puts("");
 	return 0;
 }
 
