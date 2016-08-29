@@ -6,16 +6,31 @@ void gcd(const T &a,const T &b,T &d,T &x,T &y){
 }
 
 const int MAXPRIME = 1000000;
-int isp[MAXPRIME], prime[MAXPRIME], primecnt;
-void sieve() {
-    memset(isp,0,sizeof(isp));
+int iscom[MAXPRIME], prime[MAXPRIME], primecnt;
+int phi[MAXPRIME], mu[MAXPRIME];
+void sieve(void)
+{
+    memset(iscom,0,sizeof(iscom));
     primecnt = 0;
+    phi[1] = mu[1] = 1;
     for(int i=2;i<MAXPRIME;++i) {
-        if(!isp[i]) prime[primecnt++] = i;
+        if(!iscom[i]) {
+            prime[primecnt++] = i;
+            mu[i] = -1;
+            phi[i] = i-1;
+        }
         for(int j=0;j<primecnt;++j) {
-            if(i*prime[j]>=MAXPRIME) break;
-            isp[i*prime[j]] = prime[j];
-            if(i%prime[j]==0) break;
+            int k = i * prime[j];
+            if(k>=MAXPRIME) break;
+            iscom[k] = prime[j];
+            if(i%prime[j]==0) {
+                mu[k] = 0;
+                phi[k] = phi[i] * prime[j];
+                break;
+            } else {
+                mu[k] = -mu[i];
+                phi[k] = phi[i] * (prime[j]-1);
+            }
         }
     }
 }
