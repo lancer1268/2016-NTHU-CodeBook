@@ -1,7 +1,7 @@
 #define MAXN 105
 #define INF INT_MAX
-int n;/*點數*/
-int level[MAXN],cur[MAXN];/*層次、當前弧優化*/
+int n;/*number of nodes*/
+int level[MAXN],cur[MAXN];/*layer, current arc*/
 struct edge{
 	int v,pre;
 	long long cap,flow,r;
