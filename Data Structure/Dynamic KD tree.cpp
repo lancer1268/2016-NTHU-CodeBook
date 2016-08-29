@@ -4,7 +4,7 @@
 #include<vector>
 #include<queue>
 #include<cmath>
-template<typename T,size_t kd>//kd表示有幾個維度 
+template<typename T,size_t kd>//kd: # of dimensions
 class kd_tree{
 	public:
 		struct point{
@@ -35,7 +35,7 @@ class kd_tree{
 			}
 		}*root;
 		const double alpha,loga;
-		const T INF;//記得要給INF，表示極大值 
+		const T INF;
 		int maxn;
 		struct __cmp{
 			int sort_id;
@@ -203,12 +203,12 @@ class kd_tree{
 			nearest(root,0,x,h,mndist);
 			mndist=pQ.top().first;
 			pQ=std::priority_queue<std::pair<T,point > >();
-			return mndist;/*回傳離x第k近的點的距離*/ 
+			return mndist;/*return the distance of k-th nearest point to x*/ 
 		}
 		inline const std::vector<point> &range(const point&mi,const point&ma){
 			in_range.clear();
 			range(root,0,mi,ma);
-			return in_range;/*回傳介於mi到ma之間的點vector*/ 
+			return in_range;/*return points in range [mi,ma]*/ 
 		}
 		inline int size(){return root?root->s:0;}
 };
