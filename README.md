@@ -5,7 +5,7 @@
   - SmallestCircle.cpp
   - 最近點對.cpp
 - Data Structure
-  - Dynemic KD tree.cpp
+  - Dynamic KD tree.cpp
   - kd_tree_replace_segment_tree.cpp
   - skew_heap.cpp
   - split_merge.cpp
