@@ -563,7 +563,7 @@ Code:.\Data Structure\kd_tree_replace_segment_tree.cpp
 ================
 
 ```cpp
-/*kd¾ğ¥N´À°ªºû½u¬q¾ğ*/
+ï»¿/*kdæ¨¹ä»£æ›¿é«˜ç¶­ç·šæ®µæ¨¹*/
 struct node{
 	node *l,*r;
 	point pid,mi,ma;
@@ -589,34 +589,34 @@ struct node{
 		}
 	}
 	inline void up2(){
-		//¨ä¥LÃi´k¼Ğ°O¦V¤W§ó·s 
+		//å…¶ä»–æ‡¶æƒ°æ¨™è¨˜å‘ä¸Šæ›´æ–° 
 	}
 	inline void down(){
-		//¨ä¥LÃi´k¼Ğ°O¤U±À 
+		//å…¶ä»–æ‡¶æƒ°æ¨™è¨˜ä¸‹æ¨ 
 	}
 }*root;
 
-/*ÀË¬d°Ï¶¡¥]§t¥Îªº¨ç¼Æ*/
+/*æª¢æŸ¥å€é–“åŒ…å«ç”¨çš„å‡½æ•¸*/
 inline bool range_include(node *o,const point &L,const point &R){
 	for(int i=0;i<kd;++i){ 
 		if(L.d[i]>o->ma.d[i]||R.d[i]<o->mi.d[i])return 0;
-	}//¥u­n(L,R)°Ï¶¡¦³©Moªº°Ï¶¡¦³¥æ¶°´N¦^¶Çtrue
+	}//åªè¦(L,R)å€é–“æœ‰å’Œoçš„å€é–“æœ‰äº¤é›†å°±å›å‚³true
 	return 1;
 }
 inline bool range_in_range(node *o,const point &L,const point &R){
 	for(int i=0;i<kd;++i){
 		if(L.d[i]>o->mi.d[i]||o->ma.d[i]>R.d[i])return 0;
-	}//¦pªG(L,R)°Ï¶¡§¹¥ş¥]§toªº°Ï¶¡´N¦^¶Çtrue
+	}//å¦‚æœ(L,R)å€é–“å®Œå…¨åŒ…å«oçš„å€é–“å°±å›å‚³true
 	return 1;
 }
 inline bool point_in_range(node *o,const point &L,const point &R){
 	for(int i=0;i<kd;++i){
 		if(L.d[i]>o->pid.d[i]||R.d[i]<o->pid.d[i])return 0;
-	}//¦pªG(L,R)°Ï¶¡§¹¥ş¥]§to->pid³o­ÓÂI´N¦^¶Çtrue
+	}//å¦‚æœ(L,R)å€é–“å®Œå…¨åŒ…å«o->pidé€™å€‹é»å°±å›å‚³true
 	return 1;
 }
 
-/*³æÂI­×§ï¡A¥H³æÂI§ï­È¬°¨Ò*/
+/*å–®é»ä¿®æ”¹ï¼Œä»¥å–®é»æ”¹å€¼ç‚ºä¾‹*/
 void update(node *u,const point &x,int data,int k=0){
 	if(!u)return;
 	u->down();
@@ -630,25 +630,25 @@ void update(node *u,const point &x,int data,int k=0){
 	u->up2();
 }
 
-/*°Ï¶¡­×§ï*/ 
+/*å€é–“ä¿®æ”¹*/ 
 void update(node *o,const point &L,const point &R,int data){
 	if(!o)return;
 	o->down();
 	if(range_in_range(o,L,R)){
-		//°Ï¶¡Ãi´k¼Ğ°O­×§ï 
+		//å€é–“æ‡¶æƒ°æ¨™è¨˜ä¿®æ”¹ 
 		o->down();
 		return;
 	}
 	if(point_in_range(o,L,R)){
-		//³o­ÓÂI¦b(L,R)°Ï¶¡¡A¦ı¬O¥Lªº¥ª¥k¤l¾ğ¤£¤@©w¦b°Ï¶¡¤¤
-		//³æÂIÃi´k¼Ğ°O­×§ï 
+		//é€™å€‹é»åœ¨(L,R)å€é–“ï¼Œä½†æ˜¯ä»–çš„å·¦å³å­æ¨¹ä¸ä¸€å®šåœ¨å€é–“ä¸­
+		//å–®é»æ‡¶æƒ°æ¨™è¨˜ä¿®æ”¹ 
 	}
 	if(o->l&&range_include(o->l,L,R))update(o->l,L,R,data);
 	if(o->r&&range_include(o->r,L,R))update(o->r,L,R,data);
 	o->up2();
 }
 
-/*°Ï¶¡¬d¸ß¡A¥HÁ`©M¬°¨Ò*/ 
+/*å€é–“æŸ¥è©¢ï¼Œä»¥ç¸½å’Œç‚ºä¾‹*/ 
 int query(node *o,const point &L,const point &R){
 	if(!o)return 0;
 	o->down();
@@ -963,11 +963,11 @@ Code:.\Flow\ISAP.cpp
 ================
 
 ```cpp
-#define MAXN 105
+ï»¿#define MAXN 105
 #define INF INT_MAX
-int n;/*ÂI¼Æ*/
+int n;/*é»æ•¸*/
 int d[MAXN],gap[MAXN],cur[MAXN];
-/*¼h¦¸¡Bgap[i]=¼h¦¸¬°iªºÂI¤§­Ó¼Æ¡B·í«e©·Àu¤Æ*/ 
+/*å±¤æ¬¡ã€gap[i]=å±¤æ¬¡ç‚ºiçš„é»ä¹‹å€‹æ•¸ã€ç•¶å‰å¼§å„ªåŒ–*/ 
 struct edge{
 	int v,pre;
 	long long cap,flow,r;
@@ -1333,14 +1333,14 @@ Code:.\Graph\Rectilinear_Steiner_tree.cpp
 ================
 
 ```cpp
-//¥­­±°Ò«¢¹y³Ì¤p¥Í¦¨¾ğºc³y¹Ï(¥h°£«D¥²­nÃä) 
+ï»¿//å¹³é¢æ›¼å“ˆé “æœ€å°ç”Ÿæˆæ¨¹æ§‹é€ åœ–(å»é™¤éå¿…è¦é‚Š) 
 #include<vector>
 #include<algorithm>
 #define T int
 #define INF 0x3f3f3f3f
 struct point{
 	T x,y;
-	int id;//¨C­ÓÂIªº½s¸¹³£­n¤£¤@¼Ë¡A±q0¶}©l½s¸¹ 
+	int id;//æ¯å€‹é»çš„ç·¨è™Ÿéƒ½è¦ä¸ä¸€æ¨£ï¼Œå¾0é–‹å§‹ç·¨è™Ÿ 
 	point(){}
 	T dist(const point &p)const{
 		return std::abs(x-p.x)+std::abs(y-p.y);
@@ -1376,8 +1376,8 @@ inline int bit_find(int i,int m){
 	return x.id;
 }
 inline std::vector<edge> build_graph(int n,point p[]){
-	std::vector<edge> e;//¦^¶ÇªºÃä´N¥i¥H¥Î¨Ó¨D³Ì¤p¥Í¦¨¾ğ 
-	for(int dir=0;dir<4;++dir){//4ºØ®y¼ĞÅÜ´« 
+	std::vector<edge> e;//å›å‚³çš„é‚Šå°±å¯ä»¥ç”¨ä¾†æ±‚æœ€å°ç”Ÿæˆæ¨¹ 
+	for(int dir=0;dir<4;++dir){//4ç¨®åº§æ¨™è®Šæ› 
 		if(dir%2){
 			for(int i=0;i<n;++i)std::swap(p[i].x,p[i].y);
 		}else if(dir==2){

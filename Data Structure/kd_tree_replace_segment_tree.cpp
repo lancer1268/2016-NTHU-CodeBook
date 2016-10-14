@@ -1,4 +1,4 @@
-/*kd¾ğ¥N´À°ªºû½u¬q¾ğ*/
+ï»¿/*kdæ¨¹ä»£æ›¿é«˜ç¶­ç·šæ®µæ¨¹*/
 struct node{
 	node *l,*r;
 	point pid,mi,ma;
@@ -24,34 +24,34 @@ struct node{
 		}
 	}
 	inline void up2(){
-		//¨ä¥LÃi´k¼Ğ°O¦V¤W§ó·s 
+		//å…¶ä»–æ‡¶æƒ°æ¨™è¨˜å‘ä¸Šæ›´æ–° 
 	}
 	inline void down(){
-		//¨ä¥LÃi´k¼Ğ°O¤U±À 
+		//å…¶ä»–æ‡¶æƒ°æ¨™è¨˜ä¸‹æ¨ 
 	}
 }*root;
 
-/*ÀË¬d°Ï¶¡¥]§t¥Îªº¨ç¼Æ*/
+/*æª¢æŸ¥å€é–“åŒ…å«ç”¨çš„å‡½æ•¸*/
 inline bool range_include(node *o,const point &L,const point &R){
 	for(int i=0;i<kd;++i){ 
 		if(L.d[i]>o->ma.d[i]||R.d[i]<o->mi.d[i])return 0;
-	}//¥u­n(L,R)°Ï¶¡¦³©Moªº°Ï¶¡¦³¥æ¶°´N¦^¶Çtrue
+	}//åªè¦(L,R)å€é–“æœ‰å’Œoçš„å€é–“æœ‰äº¤é›†å°±å›å‚³true
 	return 1;
 }
 inline bool range_in_range(node *o,const point &L,const point &R){
 	for(int i=0;i<kd;++i){
 		if(L.d[i]>o->mi.d[i]||o->ma.d[i]>R.d[i])return 0;
-	}//¦pªG(L,R)°Ï¶¡§¹¥ş¥]§toªº°Ï¶¡´N¦^¶Çtrue
+	}//å¦‚æœ(L,R)å€é–“å®Œå…¨åŒ…å«oçš„å€é–“å°±å›å‚³true
 	return 1;
 }
 inline bool point_in_range(node *o,const point &L,const point &R){
 	for(int i=0;i<kd;++i){
 		if(L.d[i]>o->pid.d[i]||R.d[i]<o->pid.d[i])return 0;
-	}//¦pªG(L,R)°Ï¶¡§¹¥ş¥]§to->pid³o­ÓÂI´N¦^¶Çtrue
+	}//å¦‚æœ(L,R)å€é–“å®Œå…¨åŒ…å«o->pidé€™å€‹é»å°±å›å‚³true
 	return 1;
 }
 
-/*³æÂI­×§ï¡A¥H³æÂI§ï­È¬°¨Ò*/
+/*å–®é»ä¿®æ”¹ï¼Œä»¥å–®é»æ”¹å€¼ç‚ºä¾‹*/
 void update(node *u,const point &x,int data,int k=0){
 	if(!u)return;
 	u->down();
@@ -65,25 +65,25 @@ void update(node *u,const point &x,int data,int k=0){
 	u->up2();
 }
 
-/*°Ï¶¡­×§ï*/ 
+/*å€é–“ä¿®æ”¹*/ 
 void update(node *o,const point &L,const point &R,int data){
 	if(!o)return;
 	o->down();
 	if(range_in_range(o,L,R)){
-		//°Ï¶¡Ãi´k¼Ğ°O­×§ï 
+		//å€é–“æ‡¶æƒ°æ¨™è¨˜ä¿®æ”¹ 
 		o->down();
 		return;
 	}
 	if(point_in_range(o,L,R)){
-		//³o­ÓÂI¦b(L,R)°Ï¶¡¡A¦ı¬O¥Lªº¥ª¥k¤l¾ğ¤£¤@©w¦b°Ï¶¡¤¤
-		//³æÂIÃi´k¼Ğ°O­×§ï 
+		//é€™å€‹é»åœ¨(L,R)å€é–“ï¼Œä½†æ˜¯ä»–çš„å·¦å³å­æ¨¹ä¸ä¸€å®šåœ¨å€é–“ä¸­
+		//å–®é»æ‡¶æƒ°æ¨™è¨˜ä¿®æ”¹ 
 	}
 	if(o->l&&range_include(o->l,L,R))update(o->l,L,R,data);
 	if(o->r&&range_include(o->r,L,R))update(o->r,L,R,data);
 	o->up2();
 }
 
-/*°Ï¶¡¬d¸ß¡A¥HÁ`©M¬°¨Ò*/ 
+/*å€é–“æŸ¥è©¢ï¼Œä»¥ç¸½å’Œç‚ºä¾‹*/ 
 int query(node *o,const point &L,const point &R){
 	if(!o)return 0;
 	o->down();

@@ -1,8 +1,8 @@
-#define MAXN 105
+ï»¿#define MAXN 105
 #define INF INT_MAX
-int n;/*ÂI¼Æ*/
+int n;/*é»æ•¸*/
 int d[MAXN],gap[MAXN],cur[MAXN];
-/*¼h¦¸¡Bgap[i]=¼h¦¸¬°iªºÂI¤§­Ó¼Æ¡B·í«e©·Àu¤Æ*/ 
+/*å±¤æ¬¡ã€gap[i]=å±¤æ¬¡ç‚ºiçš„é»ä¹‹å€‹æ•¸ã€ç•¶å‰å¼§å„ªåŒ–*/ 
 struct edge{
 	int v,pre;
 	long long cap,flow,r;

@@ -1,11 +1,11 @@
-//¥­­±°Ò«¢¹y³Ì¤p¥Í¦¨¾ğºc³y¹Ï(¥h°£«D¥²­nÃä) 
+ï»¿//å¹³é¢æ›¼å“ˆé “æœ€å°ç”Ÿæˆæ¨¹æ§‹é€ åœ–(å»é™¤éå¿…è¦é‚Š) 
 #include<vector>
 #include<algorithm>
 #define T int
 #define INF 0x3f3f3f3f
 struct point{
 	T x,y;
-	int id;//¨C­ÓÂIªº½s¸¹³£­n¤£¤@¼Ë¡A±q0¶}©l½s¸¹ 
+	int id;//æ¯å€‹é»çš„ç·¨è™Ÿéƒ½è¦ä¸ä¸€æ¨£ï¼Œå¾0é–‹å§‹ç·¨è™Ÿ 
 	point(){}
 	T dist(const point &p)const{
 		return std::abs(x-p.x)+std::abs(y-p.y);
@@ -41,8 +41,8 @@ inline int bit_find(int i,int m){
 	return x.id;
 }
 inline std::vector<edge> build_graph(int n,point p[]){
-	std::vector<edge> e;//¦^¶ÇªºÃä´N¥i¥H¥Î¨Ó¨D³Ì¤p¥Í¦¨¾ğ 
-	for(int dir=0;dir<4;++dir){//4ºØ®y¼ĞÅÜ´« 
+	std::vector<edge> e;//å›å‚³çš„é‚Šå°±å¯ä»¥ç”¨ä¾†æ±‚æœ€å°ç”Ÿæˆæ¨¹ 
+	for(int dir=0;dir<4;++dir){//4ç¨®åº§æ¨™è®Šæ› 
 		if(dir%2){
 			for(int i=0;i<n;++i)std::swap(p[i].x,p[i].y);
 		}else if(dir==2){
