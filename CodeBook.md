@@ -1,4 +1,4 @@
-ï»¿Codebook
+Codebook
 =======
 
 Code:.\Computational Geometry\Geometry.cpp
@@ -337,7 +337,7 @@ inline T closest_pair(vector<point<T> > &v){
 
 ```
 
-Code:.\Data Structure\Dynemic KD tree.cpp
+Code:.\Data Structure\Dynamic KD tree.cpp
 ================
 
 ```cpp
@@ -347,7 +347,7 @@ Code:.\Data Structure\Dynemic KD tree.cpp
 #include<vector>
 #include<queue>
 #include<cmath>
-template<typename T,size_t kd>//kdªí¥Ü¦³´X­Óºû«× 
+template<typename T,size_t kd>//kd: # of dimensions
 class kd_tree{
 	public:
 		struct point{
@@ -378,7 +378,7 @@ class kd_tree{
 			}
 		}*root;
 		const double alpha,loga;
-		const T INF;//°O±o­nµ¹INF¡Aªí¥Ü·¥¤j­È 
+		const T INF;
 		int maxn;
 		struct __cmp{
 			int sort_id;
@@ -546,12 +546,12 @@ class kd_tree{
 			nearest(root,0,x,h,mndist);
 			mndist=pQ.top().first;
 			pQ=std::priority_queue<std::pair<T,point > >();
-			return mndist;/*¦^¶ÇÂ÷x²ÄkªñªºÂIªº¶ZÂ÷*/ 
+			return mndist;/*return the distance of k-th nearest point to x*/ 
 		}
 		inline const std::vector<point> &range(const point&mi,const point&ma){
 			in_range.clear();
 			range(root,0,mi,ma);
-			return in_range;/*¦^¶Ç¤¶©ómi¨ìma¤§¶¡ªºÂIvector*/ 
+			return in_range;/*return points in range [mi,ma]*/ 
 		}
 		inline int size(){return root?root->s:0;}
 };
@@ -890,8 +890,8 @@ Code:.\Flow\dinic.cpp
 ```cpp
 #define MAXN 105
 #define INF INT_MAX
-int n;/*ÂI¼Æ*/
-int level[MAXN],cur[MAXN];/*¼h¦¸¡B·í«e©·Àu¤Æ*/
+int n;/*number of nodes*/
+int level[MAXN],cur[MAXN];/*layer, current arc*/
 struct edge{
 	int v,pre;
 	long long cap,flow,r;
@@ -1291,6 +1291,44 @@ inline int km(){
 
 ```
 
+Code:.\Graph\MaximumClique.cpp
+================
+
+```cpp
+const int MAXN=105;
+int N;
+bool G[MAXN][MAXN];
+int Set[MAXN],DP[MAXN],Ans;
+inline bool is_clique(const int end,const int point){
+	for(int i=1;i<end;++i){
+		if(!G[Set[i]][point])return false;
+	}
+	return true;
+}
+void dfs(int depth,int now){
+	if(depth+N-now+1<=Ans||depth+DP[now]<=Ans)return;
+	for(int i=now;i<=N;++i){
+		if(is_clique(depth+1,i)){
+			Set[depth+1]=i;
+			dfs(depth+1,i+1);
+		}
+	}
+	if(depth>Ans)Ans=depth;
+}
+inline int max_clique(){
+	memset(DP,0,sizeof(DP));
+	Ans=0;
+	DP[N]=1;
+	for(int i=N-1;i>=1;--i){
+		Set[1]=i;
+		dfs(1,i+1);
+		DP[i]=Ans;
+	}
+	return DP[1];
+}
+
+```
+
 Code:.\Graph\Rectilinear_Steiner_tree.cpp
 ================
 
@@ -1601,16 +1639,31 @@ void gcd(const T &a,const T &b,T &d,T &x,T &y){
 }
 
 const int MAXPRIME = 1000000;
-int isp[MAXPRIME], prime[MAXPRIME], primecnt;
-void sieve() {
-    memset(isp,0,sizeof(isp));
+int iscom[MAXPRIME], prime[MAXPRIME], primecnt;
+int phi[MAXPRIME], mu[MAXPRIME];
+void sieve(void)
+{
+    memset(iscom,0,sizeof(iscom));
     primecnt = 0;
+    phi[1] = mu[1] = 1;
     for(int i=2;i<MAXPRIME;++i) {
-        if(!isp[i]) prime[primecnt++] = i;
+        if(!iscom[i]) {
+            prime[primecnt++] = i;
+            mu[i] = -1;
+            phi[i] = i-1;
+        }
         for(int j=0;j<primecnt;++j) {
-            if(i*prime[j]>=MAXPRIME) break;
-            isp[i*prime[j]] = prime[j];
-            if(i%prime[j]==0) break;
+            int k = i * prime[j];
+            if(k>=MAXPRIME) break;
+            iscom[k] = prime[j];
+            if(i%prime[j]==0) {
+                mu[k] = 0;
+                phi[k] = phi[i] * prime[j];
+                break;
+            } else {
+                mu[k] = -mu[i];
+                phi[k] = phi[i] * (prime[j]-1);
+            }
         }
     }
 }
@@ -2561,7 +2614,7 @@ inline void bcc_init(int n){/*ä½¿ç”¨å‰å¦‚æœæœ‰æ±è¥¿è¦æ¸…æ‰*/
 
 ```
 
-Code:.\Tree problem\HeaveLight.cpp
+Code:.\Tree problem\HeavyLight.cpp
 ================
 
 ```cpp

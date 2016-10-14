@@ -18,6 +18,7 @@
   - Arborescence_EV.cpp
   - blossom matching.cpp
   - KM.cpp
+  - MaximumClique.cpp
   - Rectilinear_Steiner_tree.cpp
   - 一般圖最大權匹配.cpp
 - Number Theory
@@ -46,5 +47,5 @@
   - 橋連通分量.cpp
   - 雙連通分量&割點.cpp
 - Tree problem
-  - HeaveLight.cpp
+  - HeavyLight.cpp
   - link cut tree.cpp
