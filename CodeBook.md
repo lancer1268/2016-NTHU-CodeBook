@@ -662,6 +662,61 @@ int query(node *o,const point &L,const point &R){
 
 ```
 
+Code:.\Data Structure\reference point.cpp
+================
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#ifndef REFERENCE_POINTER
+#define REFERENCE_POINTER
+template<typename T>
+struct _RefCounter{
+	T data;
+	int ref;
+	_RefCounter(const T&d=0):data(d),ref(0){}
+};
+template<typename T>
+struct reference_pointer{
+	_RefCounter<T> *p;
+	T *operator->(){return &(*p).data;}
+	T &operator*(){return p->data;}
+	operator int(){return(int)(long long)p;}
+	reference_pointer&operator=(const reference_pointer &t){
+		if(p&&--(*p).ref==0)delete p;
+		p=t.p;
+		p&&++(*p).ref;
+		return*this;
+	}
+	reference_pointer(_RefCounter<T> *t=0):p(t){
+		p&&++(*p).ref;
+	}
+	reference_pointer(const reference_pointer &t):p(t.p){
+		p&&++(*p).ref;
+	}
+	~reference_pointer(){
+		if(p&&--(*p).ref==0)delete p;
+	}
+};
+template<typename T>
+inline const reference_pointer<T> new_reference(const T&nd){
+	return reference_pointer<T>(new _RefCounter<T>(nd));
+}
+#endif
+struct P{
+	int a,b;
+	P(int A,int B):a(A),b(B){}
+}p(2,3);
+int main(){
+	reference_pointer<int >b=new_reference(int(5));
+	reference_pointer<int >a=new_reference(*b);
+	reference_pointer<P >c=new_reference(p);
+	return 0;
+}
+
+
+```
+
 Code:.\Data Structure\skew_heap.cpp
 ================
 
@@ -881,6 +936,39 @@ class treap{
 		inline int size(){return root->s;}
 };
 #endif
+
+```
+
+Code:.\Data Structure\操作分治.cpp
+================
+
+```cpp
+void dq(int l,int r){
+	if(l==r)return;
+	int mid=(l+r)/2;
+	dq(l,mid);
+	處理[l,mid]的操作對[mid+1,r]的影響 
+	dq(mid+1,r);
+}
+
+```
+
+Code:.\Data Structure\整體二分.cpp
+================
+
+```cpp
+void BS(int l,int r,vector<Item> &vs){
+	//答案該<l會有的已經做完了 
+	if(l==r)整個vs的答案=l;//??????
+	int mid=(l+r)/2;
+	do_thing(l,mid);//做答案<=mid會做的事 
+	vector<Item> left=vs裡滿足的; 
+	vector<Item> right=vs-left;
+	undo_thing(l,mid);
+	BS(l,mid,left);
+	do_thing(l,mid);
+	BS(mid+1,r,right);//??????
+}
 
 ```
 
@@ -1163,6 +1251,81 @@ bool MST(int cost,int n,int root)
 
 ```
 
+Code:.\Graph\Augmenting Path.cpp
+================
+
+```cpp
+#define MAXN1 505
+#define MAXN2 505
+int n1,n2;/*n1個點連向n2個點*/ 
+int match[MAXN2];/*每個屬於n2的點匹配了哪個點*/
+vector<int > g[MAXN1];/*圖*/
+bool vis[MAXN2];/*是否走訪過*/ 
+bool dfs(int u){
+	for(size_t i=0;i<g[u].size();++i){
+		int v=g[u][i];
+		if(vis[v])continue;
+		vis[v]=1;
+		if(match[v]==-1||dfs(match[v])){
+			match[v]=u;
+			return 1;
+		}
+	}
+	return 0;
+}
+inline int max_match(){
+	int ans=0;
+	memset(match,-1,sizeof(int)*n2);
+	for(int i=0;i<n1;++i){
+		memset(vis,0,sizeof(bool)*n2);
+		if(dfs(i))++ans;
+	}
+	return ans;
+}
+```
+
+Code:.\Graph\Augmenting_Path_multiple.cpp
+================
+
+```cpp
+#define MAXN1 1005
+#define MAXN2 505
+int n1,n2;//n1個點連向n2個點，其中n2個點可以匹配很多邊 
+vector<int > g[MAXN1];//圖 
+int c[MAXN2];//每個屬於n2點最多可以接受幾條匹配邊 
+vector<int> match_list[MAXN2];//每個屬於n2的點匹配了那些點 
+bool vis[MAXN2];//是否走訪過 
+bool dfs(int u){
+	for(size_t i=0;i<g[u].size();++i){
+		int v=g[u][i];
+		if(vis[v])continue;
+		vis[v]=true;
+		if((int)match_list[v].size()<c[v]){
+			match_list[v].push_back(u);
+			return true;
+		}else{
+			for(size_t j=0;j<match_list[v].size();++j){
+				int next_u=match_list[v][j];
+				if(dfs(next_u)){
+					match_list[v][j]=u;
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+inline int max_match(){
+	for(int i=0;i<n2;++i)match_list[i].clear();
+	int cnt=0;
+	for(int u=0;u<n1;++u){
+		memset(vis,0,sizeof(bool)*n2);
+		if(dfs(u))++cnt;
+	}
+	return cnt;
+}
+```
+
 Code:.\Graph\blossom matching.cpp
 ================
 
@@ -1217,6 +1380,27 @@ inline int blossom(){
 		if(!match[i]&&bfs(i))++ans;
 	return ans;
 }
+
+```
+
+Code:.\Graph\formula
+================
+
+```cpp
+對於連通圖G
+最大獨立點集的大小設為I(G)
+最大匹配大小設為M(G)
+最小點覆蓋設為Cv(G)
+最小邊覆蓋設為Ce(G)
+對於任意連通圖
+I(G)+Cv(G)=|V|
+M(G)+Ce(G)=|V|
+
+對於連通二分圖
+I(G)=Cv(G)
+M(G)=Ce(G)
+
+最大團=補圖的最大獨立集
 
 ```
 
@@ -1627,6 +1811,280 @@ int main(){
 
 ```
 
+Code:.\language\CNF.cpp
+================
+
+```cpp
+﻿#define MAXN 55
+struct CNF{
+	int s,x,y;//s->xy | s->x, if y==-1
+	int cost;
+	CNF(){}
+	CNF(int s,int x,int y,int c):s(s),x(x),y(y),cost(c){}
+};
+int state;//規則數量 
+map<char,int> rule;//每個字元對應到的規則，小寫字母為終端字符
+vector<CNF> cnf;
+inline void init(){
+	state=0;
+	rule.clear();
+	cnf.clear();
+}
+inline void add_to_cnf(char s,const string &p,int cost){
+	//加入一個s -> <p>的文法，代價為cost 
+	if(rule.find(s)==rule.end())rule[s]=state++;
+	for(auto c:p)if(rule.find(c)==rule.end())rule[c]=state++;
+	if(p.size()==1){
+		cnf.push_back(CNF(rule[s],rule[p[0]],-1,cost));
+	}else{
+		int left=rule[s];
+		int sz=p.size();
+		for(int i=0;i<sz-2;++i){
+			cnf.push_back(CNF(left,rule[p[i]],state,0));
+			left=state++;
+		}
+		cnf.push_back(CNF(left,rule[p[sz-2]],rule[p[sz-1]],cost));
+	}
+}
+vector<long long> dp[MAXN][MAXN];
+vector<bool> neg_INF[MAXN][MAXN];//如果花費是負的可能會有無限小的情形 
+inline void relax(int l,int r,const CNF &c,long long cost,bool neg_c=0){
+	if(!neg_INF[l][r][c.s]&&(neg_INF[l][r][c.x]||cost<dp[l][r][c.s])){
+		if(neg_c||neg_INF[l][r][c.x]){
+			dp[l][r][c.s]=0;
+			neg_INF[l][r][c.s]=true;
+		}else dp[l][r][c.s]=cost;
+	}
+}
+inline void bellman(int l,int r,int n){
+	for(int k=1;k<=state;++k)
+		for(auto c:cnf)
+			if(c.y==-1)relax(l,r,c,dp[l][r][c.x]+c.cost,k==n);
+}
+inline void cyk(const vector<int> &tok){
+	for(int i=0;i<(int)tok.size();++i){
+		for(int j=0;j<(int)tok.size();++j){
+			dp[i][j]=vector<long long>(state+1,INT_MAX);
+			neg_INF[i][j]=vector<bool>(state+1,false);
+		}
+		dp[i][i][tok[i]]=0;
+		bellman(i,i,tok.size());
+	}
+	for(int r=1;r<(int)tok.size();++r){
+		for(int l=r-1;l>=0;--l){
+			for(int k=l;k<r;++k)
+				for(auto c:cnf)
+					if(~c.y)relax(l,r,c,dp[l][k][c.x]+dp[k+1][r][c.y]+c.cost);
+			bellman(l,r,tok.size());
+		}
+	}
+}
+
+```
+
+Code:.\language\earley.cpp
+================
+
+```cpp
+﻿struct Rule{
+	vector<vector<Rule*> > p;
+	void add(const vector<Rule*> &l){
+		p.push_back(l);
+	}
+};
+map<string,Rule*> NameRule;
+map<Rule*,string> RuleName;
+inline void init_Rule(){
+	for(auto r:RuleName)delete r.first;
+	RuleName.clear();
+	NameRule.clear();
+}
+inline Rule *add_rule(const string &s){
+	if(NameRule.find(s)!=NameRule.end())return NameRule[s];
+	Rule *r=new Rule();
+	RuleName[r]=s;
+	NameRule[s]=r;
+	return r;
+}
+typedef vector<Rule*> production;
+struct State{
+	Rule *r;
+	int rid,dot_id,start,end;
+	State(Rule *r,int rid,int dot,int start):r(r),rid(rid),dot_id(dot),start(start),end(-1){}
+	State(Rule *r=0,int col=0):r(r),rid(-1),dot_id(-1),start(-1),end(col){}
+	bool completed()const{
+		return rid==-1||dot_id>=(int)r->p[rid].size();
+	}
+	Rule *next_term()const{
+		if(completed())return 0;
+		return r->p[rid][dot_id];
+	}
+	bool operator<(const State& b)const{
+		if(start!=b.start)return start<b.start;
+		if(dot_id!=b.dot_id)return dot_id<b.dot_id;
+		if(r!=b.r)return r<b.r;
+		return rid<b.rid;
+	}
+	void print()const{
+		cout<<RuleName[r]<<"->";
+		if(rid!=-1)for(size_t i=0;;++i){
+			if((int)i==dot_id)cout<<" "<<"$";
+			if(i>=r->p[rid].size())break;
+			cout<<" "<<RuleName[r->p[rid][i]];
+		}
+		cout<<" "<<"["<<start<<","<<end<<"]"<<endl;
+	}
+};
+struct Column{
+	Rule *term;
+	string value;
+	vector<State> s;
+	map<State,set<pair<State,State> > > div;
+	//div比較像一棵 左兄右子的樹 
+	Column(Rule *r,const string &s):term(r),value(s){}
+	Column(){}
+	bool add(const State &st,int col){
+		if(div.find(st)==div.end()){
+			div[st];
+			s.push_back(st);
+			s.back().end=col;
+			return true;
+		}else return false;
+	}
+};
+inline vector<Column> lexer(string text){
+	//tokenize，要自己寫，以下為範例 
+	//他會把 input stream 變成 token stream，就是(terminal,value)pair
+	vector<Column> token;
+	replace(text.begin(),text.end(),',',' ');
+	stringstream ss(text);
+	while(ss>>text){
+		if(text=="a"||text=="of")continue;
+		if(text=="list"){
+			token.push_back(Column(NameRule["("],"("));
+		}else if(text=="and"){
+			token.push_back(Column(NameRule[")"],")"));
+		}else token.push_back(Column(NameRule["T"],text));
+	}
+	return token;
+}
+vector<Column> table;
+inline void predict(int col,Rule *rul){
+	for(size_t i=0;i<rul->p.size();++i){
+		table[col].add(State(rul,i,0,col),col);
+	}
+}
+inline void scan(int col,const State &s,Rule *r){
+	if(r!=table[col].term)return;
+	State ns(s.r,s.rid,s.dot_id+1,s.start);
+	table[col].add(ns,col);
+	table[col].div[ns].insert(make_pair(s,State(r,col)));
+}
+inline void complete(int col,const State &s){
+	for(size_t i=0;i<table[s.start].s.size();++i){
+		State &st=table[s.start].s[i];
+		Rule *term=st.next_term();
+		if(!term||term->p.size()==0)continue;
+		if(term==s.r){
+			State nst(st.r,st.rid,st.dot_id+1,st.start);
+			table[col].add(nst,col);
+			table[col].div[nst].insert(make_pair(st,s));
+		}
+	}
+}
+inline pair<bool,State> parse(Rule *GAMMA,const vector<Column > &token){
+	table.resize(token.size()+1);
+	for(size_t i=0;i<token.size();++i)table[i+1]=Column(token[i]);
+	table[0]=Column();
+	table[0].add(State(GAMMA,0,0,0),0);
+	for(size_t i=0;i<table.size();++i){
+		for(size_t j=0;j<table[i].s.size();++j){
+			State state=table[i].s[j];
+			if(state.completed())complete(i,state);
+			else{
+				Rule *term=state.next_term();
+				if(term->p.size())predict(i,term);
+				else if(i+1<table.size())scan(i+1,state,term);
+			}
+		}
+	}
+	for(size_t i=0;i<table.back().s.size();++i){
+		if(table.back().s[i].r==GAMMA&&table.back().s[i].completed()){
+			return make_pair(true,table.back().s[i]);
+		}
+	}
+	return make_pair(false,State(0,-1));
+}
+struct node{//語法樹的節點 
+	State s;
+	vector<vector<node*> > child;//vector<node*>.size()>1表示ambiguous 
+	node(const State &s):s(s){}
+	node(){}
+};
+struct State_end_cmp{
+	bool operator()(const State &a,const State &b)const{
+		return a.end<b.end||(a.end==b.end&&a<b);
+	}
+};
+map<State,node*,State_end_cmp> cache;
+vector<node*> node_set;
+inline void init_cache(){
+	for(auto d:node_set)delete d;
+	cache.clear();
+	node_set.clear();
+}
+void _build_tree(const State &s,node *pa,bool amb=0){
+	if(cache.find(s)!=cache.end()){
+		pa->child.push_back(vector<node*>(1,cache[s]));
+		return;
+	}
+	node *o;
+	if(s.completed()){
+		o=new node(s);
+		if(amb)pa->child.back().push_back(o);
+		else pa->child.push_back(vector<node*>(1,o));
+	}else o=pa->child.back().back();
+	amb=0;
+	for(auto div:table[s.end].div[s]){
+		if(!amb)_build_tree(div.first,pa);
+		_build_tree(div.second,o,amb);
+		amb=1;
+	}
+	if(s.completed())cache[s]=o;
+}
+inline node *build_tree(const State &s){
+	init_cache();
+	node o;
+	_build_tree(s,&o);
+	assert(o.child.size()==1);
+	assert(o.child.back().size()==1);
+	return o.child.back().back();
+}
+void print_tree(node *o,int dep=0){
+	cout<<string(dep,' '),o->s.print();
+	for(auto div:o->child){
+		for(auto nd:div){
+			print_tree(nd,dep+2);
+		}
+	}
+}
+//開始寫code:以下為加入語法的範例 
+inline Rule *get_my_Rule(){
+	Rule *S=add_rule("S"),*E=add_rule("E"),*L=add_rule("L");
+	Rule *list=add_rule("("),*AND=add_rule(")"),*T=add_rule("T");
+	S->add({list,E});
+	S->add({list,L});
+	L->add({E,L});
+	L->add({E,AND,E});
+	E->add({T});
+	E->add({S});
+	Rule *GAMMA=add_rule("GAMMA");//一定要有gamma rule當作是最上層的語法 
+	GAMMA->add({S});
+	return GAMMA;
+}
+
+```
+
 Code:.\Number Theory\basic.cpp
 ================
 
@@ -1768,6 +2226,89 @@ void k_sub_set(int k,int n){
 		comb=((comb&~y)/x>>1)|y;
 	}
 }
+
+```
+
+Code:.\Number Theory\Chinese remainder theorem.cpp
+================
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#ifndef CHINESE_REMAINDER_THEOREM
+#define CHINESE_REMAINDER_THEOREM
+template<typename T>
+inline T Euler(T n){
+	T ans=n;
+	for(T i=2;i*i<=n;++i){
+		if(n%i==0){
+			ans=ans/i*(i-1);
+			while(n%i==0)n/=i;
+		}
+	}
+	if(n>1)ans=ans/n*(n-1);
+	return ans;
+}
+template<typename T>
+inline T pow_mod(T n,T k,T m){
+	T ans=1;
+	for(n=(n>=m?n%m:n);k;k>>=1){
+		if(k&1)ans=ans*n%m;
+		n=n*n%m;
+	}
+	return ans;
+}
+template<typename T>
+inline T crt(std::vector<T> &m,std::vector<T> &a){
+	T M=1,tM,ans=0;
+	for(int i=0;i<(int)m.size();++i)M*=m[i];
+	for(int i=0;i<(int)a.size();++i){
+		tM=M/m[i];
+		ans=(ans+(a[i]*tM%M)*pow_mod(tM,Euler(m[i])-1,m[i])%M)%M;
+		/*如果m[i]是質數，Euler(m[i])-1=m[i]-2，就不用算Euler了*/
+	}
+	return ans;
+}
+#endif
+int n;
+vector<long long> a,m;
+int main(){
+	while(~scanf("%d",&n)){
+		for(int i=0;i<n;++i){
+			long long x,y;
+			scanf("%lld%lld",&x,&y);
+			m.push_back(x);
+			a.push_back(y);
+		}
+		long long ans=crt(m,a);
+		printf("%lld\n",ans);
+		for(int i=0;i<n;++i)printf("%lld %lld\n",m[i],ans%m[i]);
+		m.clear();
+		a.clear();
+	}
+	return 0;
+}
+/*
+4
+199 198
+200 199
+201 197
+137 88
+2
+265163 465
+66546165 7122
+5
+379 46
+853 852
+971 777
+659 128
+281 256
+4
+6359 1
+4877 5
+1627 6
+8941 7122
+*/
 
 ```
 
@@ -2065,7 +2606,7 @@ Catalan number: (2n)!/n!/n!/(n+1)
 Harmonic series H_n = ln(n) + gamma + 1/(2n) - 1/(12nn) + 1/(120nnnn)
 gamma = 0.57721566490153286060651209008240243104215933593992
 i-th gray code:i^(i>>1)
-
+SG(A+B)=SG(A)^SG(B)
 ```
 
 Code:.\Number Theory\Gauss_Elimination.cpp
@@ -2096,6 +2637,48 @@ void Gauss(int n) {
 			}
 		}
 	}
+}
+
+```
+
+Code:.\Number Theory\Lucas.cpp
+================
+
+```cpp
+int mod_fact(int n,int &e){
+    e=0;
+    if(n==0)return 1;
+    // (n/p)! % p
+    int res=mod_fact(n/P,e);
+    e += n/P; 
+    if( (n/P) %2 == 0){// = 1
+        return res*fact[n%P]%P;
+    }
+    // = -1
+    return res*(P-fact[n%P])%P;
+}
+int extGCD(int a,int b,int &x,int &y){
+    int d=a;
+    if(b!=0){
+        d=extGCD(b,a%b,y,x);
+        y-= (a/b)*x;
+    }else{
+        x=1;y=0;
+    }
+    return d;
+}
+int modInverse(int n){
+    int x,y;
+    extGCD(n,P,x,y);
+    return (P+x%P)%P;
+}
+int Cmod(int n,int m){
+    int a1,a2,a3,e1,e2,e3;
+    a1=mod_fact(n,e1);
+    a2=mod_fact(m,e2);
+    a3=mod_fact(n-m,e3);
+    if(e1>e2+e3)return 0;
+    return a1*modInverse(a2*a3%P)%P;
 }
 
 ```
@@ -2520,6 +3103,84 @@ inline void z_alg(char *s,int len,int *z){
 		while(i+z[i]<len&&s[i+z[i]]==s[z[i]])++z[i];
 		if(i+z[i]-1>r)r=i+z[i]-1,l=i;
 	}
+}
+
+```
+
+Code:.\Tarjan\tnfshb017_2_sat.cpp
+================
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;  
+#define MAXN 8001
+#define MAXN2 MAXN*4 
+#define n(X) ((X)+2*N)
+vector<int>  v[MAXN2];  
+vector<int> rv[MAXN2];  
+vector<int>  vis_t;  
+int N,M;  
+void addedge(int s,int e){  
+    v[s].push_back(e);  
+    rv[e].push_back(s);  
+}  
+int scc[MAXN2];  
+bool vis[MAXN2]={false};  
+void dfs(vector<int> *uv,int n,int k=-1){  
+    vis[n]=true;  
+    for(int i=0;i<uv[n].size();++i)  
+        if(!vis[uv[n][i]])  
+            dfs(uv,uv[n][i],k);  
+    if(uv==v)vis_t.push_back(n);   
+    scc[n]=k;  
+}  
+void solve(){  
+    for(int i=1;i<=N;++i){
+        if(!vis[i])dfs(v,i);
+        if(!vis[n(i)])dfs(v,n(i)); 
+    }
+    memset(vis,0,sizeof(vis));  
+    int c=0;  
+    for(int i=vis_t.size()-1;i>=0;--i)  
+        if(!vis[vis_t[i]])  
+            dfs(rv,vis_t[i],c++);  
+}  
+int main(){  
+    int a,b;  
+    scanf("%d%d",&N,&M);  
+    for(int i=1;i<=N;++i){  
+        // (A or B)&(!A & !B) A^B  
+        a=i*2-1;  
+        b=i*2;  
+        addedge(n(a),b);  
+        addedge(n(b),a);  
+        addedge(a,n(b));  
+        addedge(b,n(a));  
+    }  
+    while(M--){  
+        scanf("%d%d",&a,&b);  
+        a = a>0?a*2-1:-a*2;    
+        b = b>0?b*2-1:-b*2;  
+        // A or B  
+        addedge(n(a),b);  
+        addedge(n(b),a);  
+    }  
+    solve();  
+    bool check=true;  
+    for(int i=1;i<=2*N;++i)  
+        if(scc[i]==scc[n(i)])  
+            check=false;  
+    if(check){  
+        printf("%d\n",N);  
+        for(int i=1;i<=2*N;i+=2){  
+            if(scc[i]>scc[i+2*N])  
+                putchar('+');  
+            else  
+                putchar('-');  
+        }  
+        putchar('\n');  
+    }else puts("0");
+    return 0;  
 }
 
 ```

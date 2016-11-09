@@ -57,7 +57,7 @@ void merge(string root,int d=0)
             merge(root+FileName+"\\",d+1);
             continue;
         }
-        else if( regex_match(FileName,CPPFILE) )
+        else if( FileName.back()=='p'|| FileName=="formula" )
         {
             cout<<setw(d*4)<<""<<FileName<<endl;
             ss<<setw(d*2)<<""<<"- "<<FileName<<'\n';
