@@ -61,18 +61,6 @@ LL inv(const LL &a, const LL &n) {
     return d==1 ? (x+n)%n : -1;
 }
 
-LL china(const int &n, const int a[], const int m[]) {
-    // x = a[i] (mod m[i])
-    LL M=1, d, y, x=0;
-    for(int i=0;i<n;++i) M *= m[i];
-    for(int i=0;i<n;++i) {
-        LL w = M/m[i];
-        gcd(m[i], w, d, d, y);
-        x = (x + y*w*a[i]) % M;
-    }
-    return (x+M)%M;
-}
-
 LL log_mod(const LL &a, const LL &b, const LL &p) {
     // a ^ x = b ( mod p )
     int m=sqrt(p+.5), e=1;
