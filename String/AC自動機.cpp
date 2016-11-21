@@ -1,7 +1,3 @@
-#ifndef SUNMOON_AHO_CORASICK_AUTOMATON
-#define SUNMOON_AHO_CORASICK_AUTOMATON
-#include<queue>
-#include<vector>
 template<char L='a',char R='z'>
 class ac_automaton{
 	private:
@@ -16,13 +12,13 @@ class ac_automaton{
 		std::vector<int> q;
 		int qs,qe,vt;
 		ac_automaton():S(1),qs(0),qe(0),vt(0){}
-		inline void clear(){
+		void clear(){
 			q.clear();
 			S.resize(1);
 			for(int i=0;i<=R-L;++i)S[0].next[i]=0;
 			S[0].cnt_dp=S[0].vis=qs=qe=vt=0;
 		}
-		inline void insert(const char *s){
+		void insert(const char *s){
 			int o=0;
 			for(int i=0,id;s[i];++i){
 				id=s[i]-L;
@@ -34,7 +30,7 @@ class ac_automaton{
 			}
 			++S[o].ed;
 		}
-		inline void build_fail(){
+		void build_fail(){
 			S[0].fail=S[0].efl=-1;
 			q.clear();
 			q.push_back(0);
@@ -54,7 +50,7 @@ class ac_automaton{
 			}
 		}
 		/*DP出每個前綴在字串s出現的次數並傳回所有字串被s匹配成功的次數O(N+M)*/
-		inline int match_0(const char *s){
+		int match_0(const char *s){
 			int ans=0,id,p=0,i;
 			for(i=0;s[i];++i){
 				id=s[i]-L;
@@ -70,7 +66,7 @@ class ac_automaton{
 			return ans;
 		}
 		/*多串匹配走efl邊並傳回所有字串被s匹配成功的次數O(N*M^1.5)*/ 
-		inline int match_1(const char *s)const{
+		int match_1(const char *s)const{
 			int ans=0,id,p=0,t;
 			for(int i=0;s[i];++i){
 				id=s[i]-L;
@@ -85,7 +81,7 @@ class ac_automaton{
 			return ans;
 		}
 		/*枚舉(s的子字串∩A)的所有相異字串各恰一次並傳回次數O(N*M^(1/3))*/
-		inline int match_2(const char *s){
+		int match_2(const char *s){
 			int ans=0,id,p=0,t;
 			++vt;
 			/*把戳記vt+=1，只要vt沒溢位，所有S[p].vis==vt就會變成false
@@ -107,7 +103,7 @@ class ac_automaton{
 			return ans;
 		}
 		/*把AC自動機變成真的自動機*/
-		inline void evolution(){
+		void evolution(){
 			for(qs=1;qs!=qe;){
 				int p=q[qs++];
 				for(int i=0;i<=R-L;++i)
@@ -115,4 +111,3 @@ class ac_automaton{
 			}
 		}
 };
-#endif

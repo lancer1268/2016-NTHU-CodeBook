@@ -1,7 +1,5 @@
 #include<bits/stdc++.h>
 using namespace std;
-#ifndef REFERENCE_POINTER
-#define REFERENCE_POINTER
 template<typename T>
 struct _RefCounter{
 	T data;
@@ -34,7 +32,6 @@ template<typename T>
 inline const reference_pointer<T> new_reference(const T&nd){
 	return reference_pointer<T>(new _RefCounter<T>(nd));
 }
-#endif
 struct P{
 	int a,b;
 	P(int A,int B):a(A),b(B){}

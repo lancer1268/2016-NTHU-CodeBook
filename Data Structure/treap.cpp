@@ -1,5 +1,3 @@
-#ifndef TREAP
-#define TREAP
 template<typename T>
 class treap{
 	private:
@@ -12,10 +10,8 @@ class treap{
 			node():s(0){ch[0]=ch[1]=this;}
 		}*nil,*root;
 		unsigned x;
-		inline unsigned ran(){
-			return x=x*0xdefaced+1;
-		}
-		inline void rotate(node *&a,bool d){
+		unsigned ran(){return x=x*0xdefaced+1;}
+		void rotate(node *&a,bool d){
 			node *b=a;
 			a=a->ch[!d];
 			a->s=b->s;
@@ -64,36 +60,36 @@ class treap{
 	public:
 		treap(unsigned s=20150119):nil(new node),root(nil),x(s){}
 		~treap(){clear(root),delete nil;}
-		inline void clear(){clear(root),root=nil;}
-		inline void insert(const T &data){
+		void clear(){clear(root),root=nil;}
+		void insert(const T &data){
 			insert(root,data);
 		}
-		inline bool erase(const T &data){
+		bool erase(const T &data){
 			return erase(root,data);
 		}
-		inline bool find(const T&data){
+		bool find(const T&data){
 			for(node *o=root;o->s;)
 			if(o->data==data)return 1;
 			else o=o->ch[o->data<data];
 			return 0;
 		}
-		inline int rank(const T&data){
+		int rank(const T&data){
 			int cnt=0;
 			for(node *o=root;o->s;)
 			if(o->data<data)cnt+=o->ch[0]->s+1,o=o->ch[1];
 			else o=o->ch[0];
 			return cnt;
 		}
-		inline const T&kth(int k){
+		const T&kth(int k){
 			for(node *o=root;;)
 			if(k<=o->ch[0]->s)o=o->ch[0];
 			else if(k==o->ch[0]->s+1)return o->data;
 			else k-=o->ch[0]->s+1,o=o->ch[1];
 		}
-		inline const T&operator[](int k){
+		const T&operator[](int k){
 			return kth(k);
 		}
-		inline const T&preorder(const T&data){
+		const T&preorder(const T&data){
 			node *x=root,*y=0;
 			while(x->s)
 			if(x->data<data)y=x,x=x->ch[1];
@@ -101,7 +97,7 @@ class treap{
 			if(y)return y->data;
 			return data;
 		}
-		inline const T&successor(const T&data){
+		const T&successor(const T&data){
 			node *x=root,*y=0;
 			while(x->s)
 			if(data<x->data)y=x,x=x->ch[0];
@@ -109,6 +105,5 @@ class treap{
 			if(y)return y->data;
 			return data;
 		}
-		inline int size(){return root->s;}
+		int size(){return root->s;}
 };
-#endif

@@ -1,26 +1,19 @@
-#ifndef SUNMOON_DYNEMIC_KD_TREE
-#define SUNMOON_DYNEMIC_KD_TREE
-#include<algorithm>
-#include<vector>
-#include<queue>
-#include<cmath>
 template<typename T,size_t kd>//kd: # of dimensions
 class kd_tree{
 	public:
 		struct point{
 			T d[kd];
-			inline T dist(const point &x)const{
+			T dist(const point &x)const{
 				T ret=0;
 				for(size_t i=0;i<kd;++i)ret+=std::abs(d[i]-x.d[i]);
 				return ret;
 			}
-			inline bool operator==(const point &p){
-				for(size_t i=0;i<kd;++i){
+			bool operator==(const point &p){
+				for(size_t i=0;i<kd;++i)
 					if(d[i]!=p.d[i])return 0;
-				}
 				return 1;
 			}
-			inline bool operator<(const point &b)const{
+			bool operator<(const point &b)const{
 				return d[0]<b.d[0];
 			}
 		};
@@ -30,37 +23,27 @@ class kd_tree{
 			point pid;
 			int s;
 			node(const point &p):l(0),r(0),pid(p),s(1){}
-			inline void up(){
-				s=(l?l->s:0)+1+(r?r->s:0);
-			}
+			~node(){delete l;delete r;}
+			void up(){s=(l?l->s:0)+1+(r?r->s:0);}
 		}*root;
 		const double alpha,loga;
 		const T INF;
 		int maxn;
 		struct __cmp{
 			int sort_id;
-			inline bool operator()(const node*x,const node*y)const{
+			bool operator()(const node*x,const node*y)const{
 				return operator()(x->pid,y->pid);
 			}
-			inline bool operator()(const point &x,const point &y)const{
+			bool operator()(const point &x,const point &y)const{
 				if(x.d[sort_id]!=y.d[sort_id])
 					return x.d[sort_id]<y.d[sort_id];
-				for(size_t i=0;i<kd;++i){
+				for(size_t i=0;i<kd;++i)
 					if(x.d[i]!=y.d[i])return x.d[i]<y.d[i];
-				}
 				return 0;
 			}
 		}cmp;
-		void clear(node *o){
-			if(!o)return;
-			clear(o->l);
-			clear(o->r);
-			delete o;
-		}
-		inline int size(node *o){
-			return o?o->s:0;
-		}
-		std::vector<node*> A;
+		int size(node *o){return o?o->s:0;}
+		vector<node*> A;
 		node* build(int k,int l,int r){
 			if(l>r)return 0;
 			if(k==kd)k=0;
@@ -73,7 +56,7 @@ class kd_tree{
 			ret->up();
 			return ret;
 		}
-		inline bool isbad(node*o){
+		bool isbad(node*o){
 			return size(o->l)>alpha*o->s||size(o->r)>alpha*o->s;
 		}
 		void flatten(node *u,typename std::vector<node*>::iterator &it){
@@ -82,7 +65,7 @@ class kd_tree{
 			*it=u;
 			flatten(u->r,++it);
 		}
-		inline void rebuild(node*&u,int k){
+		void rebuild(node*&u,int k){
 			if((int)A.size()<u->s)A.resize(u->s);
 			typename std::vector<node*>::iterator it=A.begin();
 			flatten(u,it);
@@ -134,22 +117,21 @@ class kd_tree{
 				--u->s;return 1;
 			}else return 0;
 		}
-		inline T heuristic(const T h[])const{
+		T heuristic(const T h[])const{
 			T ret=0;
 			for(size_t i=0;i<kd;++i)ret+=h[i];
 			return ret;
 		}
 		int qM;
-		std::priority_queue<std::pair<T,point > >pQ;
+		priority_queue<pair<T,point > >pQ;
 		void nearest(node *u,int k,const point &x,T *h,T &mndist){
 			if(u==0||heuristic(h)>=mndist)return;
 			T dist=u->pid.dist(x),old=h[k];
 			/*mndist=std::min(mndist,dist);*/
 			if(dist<mndist){
-				pQ.push(std::make_pair(dist,u->pid));
-				if((int)pQ.size()==qM+1){
+				pQ.push(make_pair(dist,u->pid));
+				if((int)pQ.size()==qM+1)
 					mndist=pQ.top().first,pQ.pop();
-				}
 			}
 			if(x.d[k]<u->pid.d[k]){
 				nearest(u->l,(k+1)%kd,x,h,mndist);
@@ -176,28 +158,26 @@ class kd_tree{
 		}
 	public:
 		kd_tree(const T &INF,double a=0.75):alpha(a),loga(log2(1.0/a)),INF(INF),maxn(1){}
-		inline void clear(){
-			clear(root),root=0,maxn=1;
-		}
-		inline void build(int n,const point *p){
-			clear(root),A.resize(maxn=n);
+		void clear(){delete root;root=0,maxn=1;}
+		void build(int n,const point *p){
+			delete root;A.resize(maxn=n);
 			for(int i=0;i<n;++i)A[i]=new node(p[i]);
 			root=build(0,0,n-1);
 		}
-		inline void insert(const point &x){
-			insert(root,0,x,std::__lg(size(root))/loga);
+		void insert(const point &x){
+			insert(root,0,x,__lg(size(root))/loga);
 			if(root->s>maxn)maxn=root->s;
 		}
-		inline bool erase(const point &p){
+		bool erase(const point &p){
 			bool d=erase(root,0,p);
 			if(root&&root->s<alpha*maxn)rebuild();
 			return d;
 		}
-		inline void rebuild(){
+		void rebuild(){
 			if(root)rebuild(root,0);
 			maxn=root->s;
 		}
-		inline T nearest(const point &x,int k){
+		T nearest(const point &x,int k){
 			qM=k;
 			T mndist=INF,h[kd]={};
 			nearest(root,0,x,h,mndist);
@@ -205,11 +185,10 @@ class kd_tree{
 			pQ=std::priority_queue<std::pair<T,point > >();
 			return mndist;/*return the distance of k-th nearest point to x*/ 
 		}
-		inline const std::vector<point> &range(const point&mi,const point&ma){
+		const std::vector<point> &range(const point&mi,const point&ma){
 			in_range.clear();
 			range(root,0,mi,ma);
 			return in_range;/*return points in range [mi,ma]*/ 
 		}
-		inline int size(){return root?root->s:0;}
+		int size(){return root?root->s:0;}
 };
-#endif

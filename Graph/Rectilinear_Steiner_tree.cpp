@@ -18,7 +18,7 @@ struct edge{
 	int u,v;
 	T cost;
 	edge(int u,int v,const T&c):u(u),v(v),cost(c){}
-	inline bool operator<(const edge&e)const{
+	bool operator<(const edge&e)const{
 		return cost<e.cost;
 	}
 };
@@ -59,9 +59,7 @@ inline std::vector<edge> build_graph(int n,point p[]){
 		for(int i=n-1;i>=0;--i){
 			int pos=std::lower_bound(gb.begin(),gb.end(),ga[i])-gb.begin()+1;
 			int ans=bit_find(pos,m);
-			if(~ans){
-				e.push_back(edge(p[i].id,p[ans].id,p[i].dist(p[ans])));
-			}
+			if(~ans)e.push_back(edge(p[i].id,p[ans].id,p[i].dist(p[ans])));
 			bit_update(pos,p[i].x+p[i].y,i);
 		}
 	}

@@ -5,7 +5,7 @@ struct node{
 	int s;
 	int data;
 	node(const point &p,int d):l(0),r(0),pid(p),mi(p),ma(p),s(1),data(d),dmin(d),dmax(d){}
-	inline void up(){
+	void up(){
 		mi=ma=pid;
 		s=1;
 		if(l){
@@ -23,10 +23,10 @@ struct node{
 			s+=r->s;
 		}
 	}
-	inline void up2(){
+	void up2(){
 		//其他懶惰標記向上更新 
 	}
-	inline void down(){
+	void down(){
 		//其他懶惰標記下推 
 	}
 }*root;

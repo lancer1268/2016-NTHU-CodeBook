@@ -4,7 +4,7 @@
 	for(i=1;i<A;++i)c[i]+=c[i-1];\
 	for(i=len-1;i>=0;--i)sa[--c[x[y[i]]]]=y[i];\
 }
-inline void suffix_array(const char *s,int len,int *sa,int *rank,int *tmp,int *c){
+void suffix_array(const char *s,int len,int *sa,int *rank,int *tmp,int *c){
 	int A='z'+1,i,k,id,*t;
 	for(i=0;i<len;++i){
 		tmp[i]=i;
