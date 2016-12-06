@@ -5,7 +5,7 @@ class skew_heap{
 			T data;
 			node *l,*r;
 			node(const T&d):data(d),l(0),r(0){}
-			~node(){delete l;delete r;}
+			~node(){delete l,delete r;}
 		}*root;
 		int _size;
 		_Compare cmp;
@@ -20,7 +20,7 @@ class skew_heap{
 	public:
 		skew_heap():root(0),_size(0){}
 		~skew_heap(){delete root;}
-		void clear(){delete root;root=0;_size=0;}
+		void clear(){delete root,root=0,_size=0;}
 		void join(skew_heap &o){
 			root=merge(root,o.root);
 			o.root=0;
@@ -42,6 +42,7 @@ class skew_heap{
 		void pop(){
 			if(_size)_size--;
 			node *tmd=merge(root->l,root->r);
+			root->l=root->r=0;
 			delete root;
 			root=tmd;
 		}

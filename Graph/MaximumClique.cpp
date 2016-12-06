@@ -1,31 +1,43 @@
-const int MAXN=105;
-int N;
-bool G[MAXN][MAXN];
-int Set[MAXN],DP[MAXN],Ans;
-inline bool is_clique(const int end,const int point){
-	for(int i=1;i<end;++i){
-		if(!G[Set[i]][point])return false;
+struct MaxClique{
+	static const int MAXN=105;
+	int N,ans;
+	int g[MAXN][MAXN],dp[MAXN],stk[MAXN][MAXN];
+	int sol[MAXN],tmp[MAXN];//sol[0~ans-1]為答案
+	void init(int n){
+		N=n;//0-base
+		memset(g,0,sizeof(g));
 	}
-	return true;
-}
-void dfs(int depth,int now){
-	if(depth+N-now+1<=Ans||depth+DP[now]<=Ans)return;
-	for(int i=now;i<=N;++i){
-		if(is_clique(depth+1,i)){
-			Set[depth+1]=i;
-			dfs(depth+1,i+1);
+	void add_edge(int u,int v){
+		g[u][v]=g[v][u]=1;
+	}
+	int dfs(int ns,int dep){
+		if(!ns){
+			if(dep>ans){
+				ans=dep;
+				memcpy(sol,tmp,sizeof tmp);
+				return 1;
+			}else return 0;
 		}
+		for(int i=0;i<ns;++i){
+			if(dep+ns-i<=ans)return 0;
+			int u=stk[dep][i],cnt=0;
+			if(dep+dp[u]<=ans)return 0;
+			for(int j=i+1;j<ns;++j){
+				int v=stk[dep][j];
+				if(g[u][v])stk[dep+1][cnt++]=v;
+			}
+			tmp[dep]=u;
+			if(dfs(cnt,dep+1))return 1;
+		}
+		return 0;
 	}
-	if(depth>Ans)Ans=depth;
-}
-inline int max_clique(){
-	memset(DP,0,sizeof(DP));
-	Ans=0;
-	DP[N]=1;
-	for(int i=N-1;i>=1;--i){
-		Set[1]=i;
-		dfs(1,i+1);
-		DP[i]=Ans;
+	int clique(){
+		int u,v,ns;
+		for(ans=0,u=N-1;u>=0;--u){
+			for(ns=0,tmp[0]=u,v=u+1;v<N;++v)
+				if(g[u][v])stk[1][ns++]=v;
+			dfs(ns,1),dp[u]=ans;
+		}
+		return ans;
 	}
-	return DP[1];
-}
+};
